@@ -6,7 +6,7 @@ use App\Enums\StatutResponse;
 
 trait Response
 {
-    public function sendResponse($data, StatutResponse $statut, $message = '', $httpStatus = 200)
+    public function sendResponse($data, StatutResponse $statut, $message = '', $httpStatus)
     {
         return response()->json([
             'statut' => $statut->value,

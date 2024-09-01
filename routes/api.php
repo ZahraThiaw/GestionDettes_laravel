@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DetteController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -55,11 +57,24 @@ Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanct
 // Définir un groupe de routes avec un préfixe "api/v1"
 Route::prefix('v1')->middleware(['auth:sanctum', 'role:Admin,Boutiquier'])->group(function () {
     Route::get('clients', [ClientController::class, 'index']);
-    Route::get('clients/paginate', [ClientController::class, 'indexWithPagination']);
+    Route::post('clients/telephone', [ClientController::class, 'filterByTelephone']);
     Route::get('clients/{id}', [ClientController::class, 'show']);
+    Route::post('clients/{id}/user', [ClientController::class, 'showClientWithUser']);
     Route::get('clients/{id}/eager', [ClientController::class, 'showWithEager']);
     Route::post('clients', [ClientController::class, 'store']);
     Route::put('clients/{id}', [ClientController::class, 'update']);
     Route::patch('clients/{id}', [ClientController::class, 'update']);
     Route::delete('clients/{id}', [ClientController::class, 'destroy']);
+
+    Route::get('articles', [ArticleController::class, 'index']);
+    Route::get('articles/{id}', [ArticleController::class, 'show']);
+    Route::post('articles/libelle', [ArticleController::class, 'filterByLibelle']);
+    Route::post('articles', [ArticleController::class, 'store']);
+    Route::put('articles/{id}', [ArticleController::class, 'update']);
+    Route::patch('articles/{id}', [ArticleController::class, 'update']);
+    Route::post('articles/stock', [ArticleController::class, 'updateStock']);
+    Route::delete('articles/{id}', [ArticleController::class, 'destroy']); // Soft Delete
+    Route::post('articles/{id}/restore', [ArticleController::class, 'restore']); // Restore Soft Deleted Article
+
+    Route::post('clients/{id}/dettes', [DetteController::class, 'getClientDettes']);
 });

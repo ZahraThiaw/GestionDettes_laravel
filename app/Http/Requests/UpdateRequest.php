@@ -16,14 +16,14 @@ class UpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'surnom' => 'required|string|max:255',
-            'telephone' => ['required', 'string', Telephone::class],
-            'adresse' => 'nullable|string|max:255',
-            'user.nom' => 'nullable|string|max:255',
-            'user.prenom' => 'nullable|string|max:255',
-            'user.login' => 'nullable|string|max:255|unique:users,login,' . $this->user->id,
-            'user.password' => ['nullable', 'string', 'confirmed', CustumPassword::class],
-            'user.role' => ['nullable', 'string', 'in:Client'],
+            'surnom' => 'Sometimes|string|max:255',
+            'telephone' => ['Sometimes', 'string', Telephone::class],
+            'adresse' => 'Sometimes|string|max:255',
+            'user.nom' => 'Sometimes|string|max:255',
+            'user.prenom' => 'Sometimes|string|max:255',
+            'user.login' => 'Sometimes|string|max:255|unique:users,login,' . $this->user->id,
+            'user.password' => ['Sometimes', 'string', 'confirmed', CustumPassword::class],
+            'user.role' => ['Sometimes', 'string', 'in:Client'],
         ];
     }
 

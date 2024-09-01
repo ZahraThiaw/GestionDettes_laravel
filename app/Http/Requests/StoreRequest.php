@@ -17,7 +17,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'surnom' => 'required|string|max:255',
-            'telephone' => ['required', 'string', new Telephone()],
+            'telephone' =>'required|string|unique:clients', new Telephone(),
             'adresse' => 'nullable|string|max:255',
             'user' => 'nullable|array',
             'user.nom' => 'required_with:user|string|max:255',
@@ -34,6 +34,7 @@ class StoreRequest extends FormRequest
             'surnom.required' => 'Le surnom est requis.',
             'telephone.required' => 'Le numéro de téléphone est requis.',
             'telephone.string' => 'Le numéro de téléphone doit être une chaîne de caractères.',
+            'telephone.unique' => 'Le numéro de téléphone existe déjà.',
             'adresse.string' => 'L\'adresse doit être une chaîne de caractères.',
             'user.nom.required_with' => 'Le nom est requis si des données utilisateur sont fournies.',
             'user.prenom.required_with' => 'Le prénom est requis si des données utilisateur sont fournies.',

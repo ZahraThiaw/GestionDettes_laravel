@@ -8,6 +8,8 @@ use App\Models\Client;
 use App\Models\User;
 use App\Traits\Response;
 use App\Enums\StatutResponse;
+use App\Http\Resources\ClientResource;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; // Importer la façade DB pour les transactions
 
@@ -34,6 +36,30 @@ class ClientController extends Controller
             $query->orderBy('surnom', 'desc');
         }
 
+        // Filtrer par la présence ou non d'un compte utilisateur (compte = oui|non)
+        if ($request->has('comptes')) {
+            $compte = $request->query('comptes');
+            if ($compte === 'oui') {
+                $query->whereNotNull('user_id'); // Clients avec compte utilisateur
+            } elseif ($compte === 'non') {
+                $query->whereNull('user_id'); // Clients sans compte utilisateur
+            }
+        }
+
+        // Filtrer par compte actif ou non uniquement pour les clients ayant un compte utilisateur
+        if ($request->has('active')) {
+            $active = $request->query('active');
+    
+            // Ajouter une sous-requête pour filtrer sur les comptes actifs ou non
+            $query->whereHas('user', function ($q) use ($active) {
+                if ($active === 'oui') {
+                    $q->where('active', true); // Compte actif
+                } elseif ($active === 'non') {
+                    $q->where('active', false); // Compte inactif
+                }
+            });
+        }
+
         // Inclure les utilisateurs associés
         if ($request->has('include') && $request->query('include') === 'user') {
             $clients = $query->with('user')->get();
@@ -41,20 +67,84 @@ class ClientController extends Controller
             $clients = $query->get();
         }
 
-        return $this->sendResponse($clients, StatutResponse::Success, 'Liste des clients chargée avec succès.');
+        // Vérifier si la liste est vide
+        if ($clients->isEmpty()) {
+            return $this->sendResponse([], StatutResponse::Echec, 'Pas de clients.', 404);
+        }
+
+        return $this->sendResponse($clients, StatutResponse::Success, 'Liste des clients chargée avec succès.', 200);
     }
+
+    public function filterByTelephone(Request $request)
+    {
+        // Valider que le champ 'telephone' est présent et qu'il contient une liste de téléphones
+        $this->validate($request, [
+            'telephone' => 'required|string'
+        ]);
+
+        // Récupérer la liste des téléphones fournie dans la requête (séparée par des virgules)
+        $telephones = explode(',', $request->input('telephone'));
+
+        // Rechercher les clients qui correspondent aux numéros de téléphone
+        $clients = Client::whereIn('telephone', $telephones)->get();
+
+        // Vérifier si des clients ont été trouvés
+        if ($clients->isEmpty()) {
+            return $this->sendResponse([], StatutResponse::Echec, 'Aucun client trouvé avec ces numéros de téléphone.', 404);
+        }
+
+        // Retourner les clients trouvés
+        return $this->sendResponse($clients, StatutResponse::Success, 'Clients trouvés avec succès.', 200);
+    }
+
+
+    public function showClientWithUser($id)
+    {
+        try {
+            // Récupérer le client avec son compte utilisateur s'il existe
+            $client = Client::with('user')->findOrFail($id);
+
+            // Vérifier si le client a un utilisateur associé
+            if ($client->user) {
+                $clientData = [
+                    'client' => new ClientResource($client),
+                    'user' => new UserResource($client->user),
+                ];
+
+                return $this->sendResponse($clientData, StatutResponse::Success, 'Client et utilisateur trouvés avec succès.', 200);
+            } else {
+                $clientData = [
+                    'client' => new ClientResource($client),
+                    'user' => null,
+                ];
+                return $this->sendResponse($clientData, StatutResponse::Echec, 'Client trouvé avec succès, mais aucun utilisateur associé.', 411);
+            }
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Retourner une erreur si l'ID du client n'existe pas
+            return $this->sendResponse([], StatutResponse::Echec, 'Le client avec l\'ID spécifié n\'existe pas.', 404);
+        }
+    }
+
 
     public function show($id, Request $request)
     {
-        if ($request->has('include') && $request->query('include') === 'user') {
-            $client = Client::with('user')->findOrFail($id);
-        } else {
-            $client = Client::findOrFail($id);
+        try {
+            // Vérifier si la requête contient le paramètre 'include' avec la valeur 'user'
+            if ($request->has('include') && $request->query('include') === 'user') {
+                // Récupérer le client avec les informations de l'utilisateur associé
+                $client = Client::with('user')->findOrFail($id);
+            } else {
+                // Récupérer uniquement le client
+                $client = Client::findOrFail($id);
+            }
+
+            // Retourner le client récupéré
+            return $this->sendResponse($client, StatutResponse::Success, 'Client trouvé avec succès.', 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // Retourner un message d'erreur si le client n'existe pas
+            return $this->sendResponse([], StatutResponse::Echec, 'Le client avec l\'ID spécifié n\'existe pas.', 404);
         }
-
-        return $this->sendResponse($client, StatutResponse::Success, 'Client récupéré avec succès.');
     }
-
 
     public function store(StoreRequest $request)
     {
@@ -85,7 +175,7 @@ class ClientController extends Controller
             DB::commit();
 
             // Retourner la réponse
-            return $this->sendResponse($client, StatutResponse::Success, 'Client créé avec succès.', 201);
+            return $this->sendResponse($client, StatutResponse::Success, 'Client créé avec succès.', 200);
 
         } catch (\Exception $e) {
             // En cas d'erreur, rollback la transaction
@@ -123,7 +213,7 @@ class ClientController extends Controller
             }
         }
 
-        return $this->sendResponse($client, StatutResponse::Success, 'Client mis à jour avec succès.');
+        return $this->sendResponse($client, StatutResponse::Success, 'Client mis à jour avec succès.', 200);
     }
 
     public function destroy($id)
@@ -134,44 +224,7 @@ class ClientController extends Controller
         }
         $client->delete();
 
-        return $this->sendResponse(null, StatutResponse::Success, 'Client supprimé avec succès.');
+        return $this->sendResponse(null, StatutResponse::Success, 'Client supprimé avec succès.', 200);
     }
 }
 
-
-// public function store(StoreRequest $request)
-//     {
-//         DB::beginTransaction(); // Démarrer la transaction
-
-//         try {
-//             // Création du client
-//             $clientData = $request->only(['surnom', 'telephone', 'adresse']);
-//             $clientId = DB::table('clients')->insertGetId($clientData);
-
-//             // Si les données de l'utilisateur sont présentes dans la requête
-//             if ($request->has('user')) {
-//                 $userData = $request->get('user');
-//                 $userData['role'] = 'Client'; // Assurez-vous que le rôle est Client
-
-//                 // Création de l'utilisateur associé
-//                 $userId = DB::table('users')->insertGetId($userData);
-
-//                 // Mise à jour du client avec l'ID utilisateur
-//                 DB::table('clients')->where('id', $clientId)->update(['user_id' => $userId]);
-//             }
-
-//             // Si tout s'est bien passé, on confirme la transaction
-//             DB::commit();
-
-//             // Récupérer le client créé (avec ou sans utilisateur)
-//             $client = DB::table('clients')->where('id', $clientId)->first();
-
-//             return $this->sendResponse($client, StatutResponse::Success, 'Client créé avec succès.', 201);
-
-//         } catch (\Exception $e) {
-//             // En cas d'erreur, rollback la transaction
-//             DB::rollBack();
-
-//             return $this->sendResponse(null, StatutResponse::Error, 'Erreur lors de la création du client : ' . $e->getMessage(), 500);
-//         }
-//     }
