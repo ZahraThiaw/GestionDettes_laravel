@@ -55,7 +55,8 @@ Route::post('login', [AuthController::class, 'login']);
 Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // Définir un groupe de routes avec un préfixe "api/v1"
-Route::prefix('v1')->middleware(['auth:sanctum', 'role:Admin,Boutiquier'])->group(function () {
+//Route::prefix('v1')->middleware(['auth:sanctum', 'name:Admin,Boutiquier'])->group(function () {
+Route::prefix('v1')->group(function () {
     Route::get('clients', [ClientController::class, 'index']);
     Route::post('clients/telephone', [ClientController::class, 'filterByTelephone']);
     Route::get('clients/{id}', [ClientController::class, 'show']);

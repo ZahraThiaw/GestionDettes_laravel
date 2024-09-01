@@ -18,7 +18,10 @@ return new class extends Migration
             $table->string('prenom'); // prénom de l'utilisateur
             $table->string('login')->unique(); // login unique
             $table->string('password'); // mot de passe hashé
-            $table->enum('role', array_column(Role::cases(), 'value')); // Utilisation de l'énumération Role
+            $table->unsignedBigInteger('role_id')->default(1)->after('password'); // Attribuer un rôle par défaut
+            $table->foreign('role_id')->references('id')->on('roles')->onDelete('cascade');
+            $table->string('photo')->after('role_id');
+            $table->boolean('active')->default(true);
             $table->timestamps(); // colonnes created_at et updated_at
         });
     }

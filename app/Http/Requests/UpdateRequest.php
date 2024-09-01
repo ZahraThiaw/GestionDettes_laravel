@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\CustomPassword;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\Telephone;
-use App\Rules\CustumPassword;
 
 class UpdateRequest extends FormRequest
 {
@@ -22,7 +22,7 @@ class UpdateRequest extends FormRequest
             'user.nom' => 'Sometimes|string|max:255',
             'user.prenom' => 'Sometimes|string|max:255',
             'user.login' => 'Sometimes|string|max:255|unique:users,login,' . $this->user->id,
-            'user.password' => ['Sometimes', 'string', 'confirmed', CustumPassword::class],
+            'user.password' => ['Sometimes', 'string', 'confirmed', CustomPassword::class],
             'user.role' => ['Sometimes', 'string', 'in:Client'],
         ];
     }

@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\CustomPassword;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\Telephone;
-use App\Rules\CustumPassword;
 
 class StoreRequest extends FormRequest
 {
@@ -23,7 +23,7 @@ class StoreRequest extends FormRequest
             'user.nom' => 'required_with:user|string|max:255',
             'user.prenom' => 'required_with:user|string|max:255',
             'user.login' => 'required_with:user|string|max:255|unique:users,login',
-            'user.password' => ['required_with:user', 'string', 'confirmed', new CustumPassword()], // Instanciation de la règle
+            'user.password' => ['required_with:user', 'string', 'confirmed', new CustomPassword()], // Instanciation de la règle
             'user.role' => ['required_with:user', 'string', 'in:Client'], // Assurez-vous que le rôle est Client
         ];
     }

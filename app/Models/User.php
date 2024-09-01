@@ -10,7 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -22,7 +22,8 @@ class User extends Authenticatable
         'prenom',
         'login',
         'password',
-        'role',
+        'role_id', 
+        'photo',
         'active',
     ];
 
@@ -57,5 +58,9 @@ class User extends Authenticatable
     {
         return $this->hasOne(Client::class);
     }
-    
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
 }

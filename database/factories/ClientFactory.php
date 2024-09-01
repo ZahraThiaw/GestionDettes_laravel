@@ -5,29 +5,48 @@ namespace Database\Factories;
 use App\Models\Client;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
 
 class ClientFactory extends Factory
 {
     protected $model = Client::class;
 
-    public function definition()
+    public function definition(): array
     {
         return [
-            'surnom' => $this->faker->name,
-            'telephone' => $this->faker->unique()->regexify('^(77|78|76|70|75)\d{6}$'),
-            'adresse' => $this->faker->optional()->address,
-            'user_id' => null, // Par défaut, l'utilisateur est nul
+            'surnom' => $this->faker->unique()->word, // Assure l'unicité des surnoms
+            'telephone' => $this->uniquePhoneNumber(), // Utilise une méthode pour garantir les contraintes du téléphone
+            'adresse' => $this->faker->address,
+            'user_id' => $this->assignUserId(), // Associe un utilisateur unique avec le rôle Client
         ];
     }
 
-    public function withUser()
+    /**
+     * Génére un numéro de téléphone valide, unique et conforme aux critères.
+     */
+    private function uniquePhoneNumber(): string
     {
-        return $this->afterCreating(function (Client $client) {
-            $user = User::factory()->create([
-                'role' => 'Client', // Spécifiez le rôle Client
-            ]);
-            $client->update(['user_id' => $user->id]);
-        });
+        // Génère un numéro de téléphone valide
+        return $this->faker->unique()->numerify($this->faker->randomElement(['77########', '78########', '75########', '70########']));
+    }
+
+    /**
+     * Associe un utilisateur avec le rôle Client, en s'assurant que l'ID est unique.
+     */
+    private function assignUserId(): ?int
+    {
+        // Récupère un utilisateur avec le rôle Client
+        $user = User::whereHas('role', function ($query) {
+            $query->where('name', 'Client');
+        })->inRandomOrder()->first();
+
+        // Retourne l'ID de l'utilisateur ou null si aucun utilisateur n'est trouvé
+        return $user ? $user->id : null;
+    }
+
+    public function withoutAccount(): Factory
+    {
+        return $this->state([
+            'user_id' => null,
+        ]);
     }
 }

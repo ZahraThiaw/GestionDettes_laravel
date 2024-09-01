@@ -2,13 +2,17 @@
 
 namespace Database\Seeders;
 
-use App\Models\Client;
 use Illuminate\Database\Seeder;
+use App\Models\Client;
 
 class ClientSeeder extends Seeder
 {
     public function run()
     {
-        Client::factory()->count(1)->create(); // Crée 10 clients sans compte utilisateur
+        // Créez des clients avec un utilisateur associé
+        Client::factory()->count(5)->create();
+
+        // Créez des clients sans utilisateur associé
+        Client::factory()->count(5)->withoutAccount()->create();
     }
 }
