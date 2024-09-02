@@ -10,8 +10,54 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+
+
 class UserController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/users",
+     *     summary="Create a new user",
+     *     tags={"Users"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
+     *                 @OA\Property(property="password", type="string", example="password123"),
+     *                 @OA\Property(property="role_id", type="integer", example=1),
+     *                 @OA\Property(property="photo", type="string", format="binary"),
+     *                 required={"name", "email", "password", "role_id"}
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="User created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="statut", type="string", example="success"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="John Doe"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
+     *                 @OA\Property(property="role_id", type="integer", example=1),
+     *                 @OA\Property(property="photo", type="string", example="photo.jpg")
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Utilisateur créé avec succès.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Error creating user",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="statut", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Erreur lors de la création de l'utilisateur: Error message")
+     *         )
+     *     )
+     * )
+     */
     public function store(UserRequest $request)
     {
         // Démarrer une transaction pour garantir l'intégrité des données
@@ -50,6 +96,60 @@ class UserController extends Controller
         }
     }
 
+     /**
+     * @OA\Get(
+     *     path="/users",
+     *     summary="Retrieve a list of users",
+     *     tags={"Users"},
+     *     @OA\Parameter(
+     *         name="role",
+     *         in="query",
+     *         description="Filter users by role name",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="active",
+     *         in="query",
+     *         description="Filter users by active status (oui or non)",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"oui", "non"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of users retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="statut", type="string", example="success"),
+     *             @OA\Property(property="data", type="array",
+     *                 @OA\Items(type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="John Doe"),
+     *                     @OA\Property(property="email", type="string", example="john@example.com"),
+     *                     @OA\Property(property="role_id", type="integer", example=1),
+     *                     @OA\Property(property="photo", type="string", example="photo.jpg")
+     *                 )
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Liste des utilisateurs récupérée avec succès.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Invalid role specified",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="statut", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Le rôle spécifié est invalide.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="No users found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="statut", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Aucun utilisateur trouvé.")
+     *         )
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
         // Récupérer les paramètres de la requête

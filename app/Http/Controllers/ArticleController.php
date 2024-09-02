@@ -14,7 +14,46 @@ use Illuminate\Http\Request;
 class ArticleController extends Controller
 {
     use Response;
-
+/**
+     * @OA\Get(
+     *     path="/articles",
+     *     summary="Liste des articles",
+     *     tags={"Article"},
+     *     @OA\Parameter(
+     *         name="disponible",
+     *         in="query",
+     *         description="Filtrer les articles disponibles ou non",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"oui", "non"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des articles récupérée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Liste des articles récupérée avec succès."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="libelle", type="string", example="Article Example"),
+     *                     @OA\Property(property="qteStock", type="integer", example=100)
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Aucun article trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Aucun article trouvé.")
+     *         )
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
         $query = Article::query()->whereNull('deleted_at'); // Exclure les articles supprimés
@@ -42,6 +81,45 @@ class ArticleController extends Controller
         return $this->sendResponse(ArticleResource::collection($articles), StatutResponse::Success, 'Liste des articles récupérée avec succès.', 200);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/articles/libelle",
+     *     summary="Filtrer un article par libellé",
+     *     tags={"Article"},
+     *     @OA\Parameter(
+     *         name="libelle",
+     *         in="query",
+     *         description="Libellé de l'article",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Article récupéré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Article récupéré avec succès."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="libelle", type="string", example="Article Example"),
+     *                 @OA\Property(property="qteStock", type="integer", example=100)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Aucun article trouvé avec ce libellé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Aucun article trouvé avec ce libellé.")
+     *         )
+     *     )
+     * )
+     */
+
+
     //Filtre article par libelle
     public function filterByLibelle(Request $request)
     {
@@ -62,6 +140,44 @@ class ArticleController extends Controller
         return $this->sendResponse([], StatutResponse::Echec, 'Libellé non fourni.', 404);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/articles/{id}",
+     *     summary="Afficher un article",
+     *     tags={"Article"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID de l'article",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Article récupéré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Article récupéré avec succès."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="libelle", type="string", example="Article Example"),
+     *                 @OA\Property(property="qteStock", type="integer", example=100)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Article non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Article non trouvé.")
+     *         )
+     *     )
+     * )
+     */
+
     // Afficher un article
     public function show($id)
     {
@@ -74,6 +190,47 @@ class ArticleController extends Controller
         return $this->sendResponse(new ArticleResource($article), StatutResponse::Success, 'Article récupéré avec succès.', 200);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/articles",
+     *     summary="Créer un nouvel article",
+     *     tags={"Article"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(property="libelle", type="string", example="Article Example"),
+     *                 @OA\Property(property="qteStock", type="integer", example=100),
+     *                 required={"libelle", "qteStock"}
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Article créé avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Article créé avec succès."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="libelle", type="string", example="Article Example"),
+     *                 @OA\Property(property="qteStock", type="integer", example=100)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Requête invalide",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Requête invalide.")
+     *         )
+     *     )
+     * )
+     */
 
     // Créer un nouvel article
     public function store(StoreArticleRequest $request)
@@ -82,6 +239,54 @@ class ArticleController extends Controller
         return $this->sendResponse(new ArticleResource($article), StatutResponse::Success, 'Article créé avec succès', 201);
     }
 
+    /**
+     * @OA\Put(
+     *     path="/articles/{id}",
+     *     summary="Mettre à jour un article",
+     *     tags={"Article"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID de l'article",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 @OA\Property(property="libelle", type="string", example="Article Example Updated"),
+     *                 @OA\Property(property="qteStock", type="integer", example=200),
+     *                 required={"libelle", "qteStock"}
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Article mis à jour avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Article mis à jour avec succès."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="libelle", type="string", example="Article Example Updated"),
+     *                 @OA\Property(property="qteStock", type="integer", example=200)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Article non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Article non trouvé.")
+     *         )
+     *     )
+     * )
+     */
     public function update(UpdateArticleRequest $request, $id): JsonResponse
     {
         try {
@@ -113,6 +318,65 @@ class ArticleController extends Controller
         return $this->sendResponse(new ArticleResource($article), StatutResponse::Success, 'Article mis à jour avec succès', 200);
     }    
 
+
+    /**
+     * @OA\Put(
+     *     path="/articles/update-stock",
+     *     summary="Mettre à jour le stock des articles",
+     *     tags={"Article"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="qteStock", type="integer", example=10),
+     *                     required={"id", "qteStock"}
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Mise à jour du stock effectuée avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="success",
+     *                 type="array",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="libelle", type="string", example="Article Example"),
+     *                     @OA\Property(property="qteStock", type="integer", example=100),
+     *                 )
+     *             ),
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="array",
+     *                 @OA\Items(type="integer", example=1)
+     *             ),
+     *             @OA\Property(
+     *                 property="invalidStock",
+     *                 type="array",
+     *                 @OA\Items(type="integer", example=2)
+     *             ),
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Mise à jour du stock effectuée avec succès.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Requête invalide",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Requête invalide.")
+     *         )
+     *     )
+     * )
+ */
     public function updateStock(Request $request): JsonResponse
     {
         // Récupérer le corps de la requête qui contient la liste des articles
@@ -165,6 +429,34 @@ class ArticleController extends Controller
         );
     }
 
+
+/**
+     * @OA\Delete(
+     *     path="/articles/{id}",
+     *     summary="Supprimer un article",
+     *     tags={"Article"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID de l'article",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="Article supprimé avec succès"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Article non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Article non trouvé.")
+     *         )
+     *     )
+     * )
+     */
+
     // Supprimer un article (Soft Delete)
     public function destroy($id)
     {
@@ -182,6 +474,43 @@ class ArticleController extends Controller
         return $this->sendResponse(new ArticleResource($article), StatutResponse::Success, 'Article supprimé avec succès', 200);
     }
 
+    /**
+     * @OA\Put(
+     *     path="/articles/{id}/restore",
+     *     summary="Restaurer un article soft supprimé",
+     *     tags={"Article"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID de l'article à restaurer",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Article restauré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *             @OA\Property(property="message", type="string", example="Article restauré avec succès."),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="libelle", type="string", example="Article Example"),
+     *                 @OA\Property(property="qteStock", type="integer", example=100)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Article non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="L'article avec l'ID spécifié n'existe pas ou n'a pas été supprimé.")
+     *         )
+     *     )
+     * )
+     */
     // Restaurer un article supprimé
     public function restore($id)
     {

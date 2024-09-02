@@ -19,17 +19,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
 
-Route::get('v1/users', function () {
-    return \App\Models\User::all();
-});
+// Route::get('v1/users', function () {
+//     return \App\Models\User::all();
+// });
 
-Route::get('v1/users/{id}', function ($id) {
-    return \App\Models\User::findOrFail($id);
-});
+// Route::get('v1/users/{id}', function ($id) {
+//     return \App\Models\User::findOrFail($id);
+// });
 
 
 // Route::prefix('v1')->group(function () { 
@@ -70,22 +70,22 @@ Route::prefix('v1')->group(function () {
         // Routes accessibles uniquement par les Admins
         Route::middleware('can:isBoutiquier')->group(function (){
             Route::get('articles', [ArticleController::class, 'index']);
-            Route::patch('articles/{id}', [ArticleController::class, 'update']);
-            Route::post('articles/stock', [ArticleController::class, 'updateStock']);
-            Route::get('articles/{id}', [ArticleController::class, 'show']);
-            Route::post('articles/libelle', [ArticleController::class, 'filterByLibelle']);
             Route::post('articles', [ArticleController::class, 'store']);
+            Route::patch('articles/{id}', [ArticleController::class, 'update']);
+            Route::get('articles/{id}', [ArticleController::class, 'show']);
             Route::put('articles/{id}', [ArticleController::class, 'update']);
             Route::delete('articles/{id}', [ArticleController::class, 'destroy']); // Soft Delete
-            Route::post('articles/{id}/restore', [ArticleController::class, 'restore']); // Restore Soft Deleted Article
+            Route::post('articles/restore/{id}', [ArticleController::class, 'restore']); // Restore Soft Deleted Article
+            Route::post('articles/stock', [ArticleController::class, 'updateStock']);
+            Route::post('articles/libelle', [ArticleController::class, 'filterByLibelle']);
 
             Route::post('clients', [ClientController::class, 'store']);
-            Route::post('register/{clientId}', [ClientController::class, 'registerClientForExistingClient']);
             Route::get('clients', [ClientController::class, 'index']);
-            Route::post('clients/telephone', [ClientController::class, 'filterByTelephone']);
             Route::put('clients/{id}', [ClientController::class, 'update']);
             Route::patch('clients/{id}', [ClientController::class, 'update']);
             Route::delete('clients/{id}', [ClientController::class, 'destroy']);
+            Route::post('clients/{clientId}/register', [ClientController::class, 'registerClientForExistingClient']);
+            Route::post('clients/telephone', [ClientController::class, 'filterByTelephone']);
 
         });
 
