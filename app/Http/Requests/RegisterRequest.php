@@ -4,34 +4,27 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\CustomPassword;
-use App\Models\Role;
 
-class UserRequest extends FormRequest
+class RegisterRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        // Vous pouvez autoriser ou refuser la demande ici
         return true;
     }
 
     public function rules(): array
     {
-        $validRoles = Role::whereIn('name', ['Admin', 'Boutiquier'])->pluck('id')->toArray();
-
         return [
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
             'login' => 'required|string|max:255|unique:users,login',
-            'password' => ['required', 'confirmed', new CustomPassword],
-            'role_id' => ['required', 'integer', 'exists:roles,id', function ($attribute, $value, $fail) use ($validRoles) {
-                if (!in_array($value, $validRoles)) {
-                    $fail('Le rôle sélectionné est invalide. Choisissez Admin ou Boutiquier.');
-                }
-            }],
-            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'password' => ['required', 'confirmed', new CustomPassword], // Utilisation de la règle CustomPassword
+            'photo' => 'required|image|max:2048',
         ];
     }
 
-    public function messages()
+    public function messages(): array
     {
         return [
             'nom.required' => 'Le nom est obligatoire.',
@@ -46,11 +39,8 @@ class UserRequest extends FormRequest
             'login.unique' => 'Le login est déjà utilisé.',
             'password.required' => 'Le mot de passe est obligatoire.',
             'password.confirmed' => 'Les mots de passe ne correspondent pas.',
-            'role_id.required' => 'Le rôle est obligatoire.',
-            'role_id.exists' => 'Le rôle sélectionné est invalide.',
             'photo.required' => 'La photo est obligatoire.',
             'photo.image' => 'La photo doit être une image.',
-            'photo.mimes' => 'La photo doit être de type jpeg, png, ou jpg.',
             'photo.max' => 'La taille de la photo ne doit pas dépasser 2 Mo.',
         ];
     }

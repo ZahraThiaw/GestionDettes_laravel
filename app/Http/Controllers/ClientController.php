@@ -8,8 +8,10 @@ use App\Models\Client;
 use App\Models\User;
 use App\Traits\Response;
 use App\Enums\StatutResponse;
+use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\ClientResource;
 use App\Http\Resources\UserResource;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; // Importer la façade DB pour les transactions
 
@@ -96,7 +98,6 @@ class ClientController extends Controller
         // Retourner les clients trouvés
         return $this->sendResponse($clients, StatutResponse::Success, 'Clients trouvés avec succès.', 200);
     }
-
 
     public function showClientWithUser($id)
     {
@@ -186,6 +187,94 @@ class ClientController extends Controller
         }
     }
 
+    // public function registerBoutiquierForExistingClient(RegisterRequest $request, $clientId)
+    // {
+    //     // Démarrer une transaction
+    //     DB::beginTransaction();
+
+    //     try {
+    //         // Récupérer le client existant
+    //         $client = Client::findOrFail($clientId);
+
+    //         // Vérifier si le client a déjà un compte utilisateur
+    //         if ($client->user) {
+    //             return $this->sendResponse(null, StatutResponse::Echec, 'Ce client a déjà un compte utilisateur.', 409);
+    //         }
+
+    //         // Obtenir les données validées de la requête
+    //         $userData = $request->validated();
+
+    //         // Créer le compte utilisateur avec le rôle "Boutiquier"
+    //         $userData['role'] = 'Boutiquier';
+    //         $user = User::create($userData);
+
+    //         // Associer le compte utilisateur au client
+    //         $client->user()->associate($user);
+    //         $client->save();
+
+    //         // Confirmer la transaction
+    //         DB::commit();
+
+    //         // Retourner la réponse avec succès
+    //         return $this->sendResponse(new ClientResource($client), StatutResponse::Success, 'Compte utilisateur créé avec succès pour le client.', 201);
+
+    //     } catch (\Exception $e) {
+    //         // En cas d'erreur, rollback la transaction
+    //         DB::rollBack();
+
+    //         // Retourner une réponse d'erreur
+    //         return $this->sendResponse(null, StatutResponse::Echec, 'Erreur lors de la création du compte : ' . $e->getMessage(), 500);
+    //     }
+    // }
+
+    public function registerClientForExistingClient(RegisterRequest $request, $clientId)
+    {
+        // Démarrer une transaction pour assurer la cohérence des données
+        DB::beginTransaction();
+
+        try {
+            // Récupérer le client existant à partir de son ID
+            $client = Client::findOrFail($clientId);
+
+            // Vérifier si le client a déjà un compte utilisateur
+            if ($client->user) {
+                return $this->sendResponse(null, StatutResponse::Echec, 'Ce client a déjà un compte utilisateur.', 409);
+            }
+
+            // Vérifier si le login existe déjà dans la base de données
+            $userData = $request->validated();
+            if (User::where('login', $userData['login'])->exists()) {
+                return $this->sendResponse(null, StatutResponse::Echec, 'Le login existe déjà.', 409);
+            }
+
+            // Récupérer le rôle "Client" à partir de la table des rôles
+            $roleClient = Role::where('name', 'Client')->first();
+            if (!$roleClient) {
+                return $this->sendResponse(null, StatutResponse::Echec, 'Le rôle "Client" est introuvable.', 500);
+            }
+
+            // Créer le compte utilisateur avec le rôle "Client"
+            $userData['role_id'] = $roleClient->id; // Assigner l'ID du rôle client
+            $user = User::create($userData);
+
+            // Associer le compte utilisateur au client
+            $client->user()->associate($user);
+            $client->save();
+
+            // Confirmer la transaction pour enregistrer les modifications
+            DB::commit();
+
+            // Retourner une réponse avec succès et les détails du client
+            return $this->sendResponse(new ClientResource($client), StatutResponse::Success, 'Compte utilisateur créé avec succès pour le client.', 201);
+
+        } catch (\Exception $e) {
+            // En cas d'erreur, annuler la transaction
+            DB::rollBack();
+            
+            // Retourner une réponse d'échec avec l'erreur
+            return $this->sendResponse(null, StatutResponse::Echec, 'Erreur lors de la création du compte : ' . $e->getMessage(), 500);
+        }
+    }
 
 
     public function update(UpdateRequest $request, $id)
