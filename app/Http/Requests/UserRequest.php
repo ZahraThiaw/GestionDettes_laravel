@@ -20,14 +20,14 @@ class UserRequest extends FormRequest
         return [
             'nom' => 'required|string|max:255',
             'prenom' => 'required|string|max:255',
-            'login' => 'required|string|max:255|unique:users,login',
+            'login' => 'required|email|max:255|unique:users,login',
             'password' => ['required', 'confirmed', new CustomPassword],
             'role_id' => ['required', 'integer', 'exists:roles,id', function ($attribute, $value, $fail) use ($validRoles) {
                 if (!in_array($value, $validRoles)) {
                     $fail('Le rôle sélectionné est invalide. Choisissez Admin ou Boutiquier.');
                 }
             }],
-            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'photo' => 'required|image|mimes:jpeg,png,jpg,svg|max:40',
         ];
     }
 
@@ -41,7 +41,7 @@ class UserRequest extends FormRequest
             'prenom.string' => 'Le prénom doit être une chaîne de caractères.',
             'prenom.max' => 'Le prénom ne doit pas dépasser 255 caractères.',
             'login.required' => 'Le login est obligatoire.',
-            'login.string' => 'Le login doit être une chaîne de caractères.',
+            'login.email' => 'Le login doit être une adresse email valide.',
             'login.max' => 'Le login ne doit pas dépasser 255 caractères.',
             'login.unique' => 'Le login est déjà utilisé.',
             'password.required' => 'Le mot de passe est obligatoire.',
@@ -51,7 +51,7 @@ class UserRequest extends FormRequest
             'photo.required' => 'La photo est obligatoire.',
             'photo.image' => 'La photo doit être une image.',
             'photo.mimes' => 'La photo doit être de type jpeg, png, ou jpg.',
-            'photo.max' => 'La taille de la photo ne doit pas dépasser 2 Mo.',
+            'photo.max' => 'La taille de la photo ne doit pas dépasser 40ko.',
         ];
     }
 }

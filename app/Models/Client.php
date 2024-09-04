@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Scopes\FilterByTelephoneScope;
 
 class Client extends Model
 {
@@ -21,6 +22,12 @@ class Client extends Model
         'created_at',
         'updated_at',
     ];
+
+    protected static function booted()
+    {
+        static::addGlobalScope(new FilterByTelephoneScope(request()->input('telephone')));
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -31,8 +38,6 @@ class Client extends Model
     {
         return $this->hasMany(Dette::class);
     }
-
-    // Relation avec le modèle User
 
     // Méthode pour vérifier si le client a un compte actif
     public function hasActiveAccount()

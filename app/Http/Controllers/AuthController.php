@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Services\AuthentificationServiceInterface;
 
 /**
  * @OA\OpenApi(
@@ -30,6 +31,15 @@ use App\Models\User;
  */
 class AuthController extends Controller
 {
+
+    protected $authService;
+
+    // Injecter l'interface dans le constructeur
+    public function __construct(AuthentificationServiceInterface $authService)
+    {
+        $this->authService = $authService;
+    }
+
     /**
      * @OA\Post(
      *     path="/login",
@@ -63,21 +73,34 @@ class AuthController extends Controller
      *     security={{"bearerAuth": {}}},
      * )
      */
+    // public function login(Request $request)
+    // {
+    //     $credentials = $request->only('login', 'password');
+
+    //     if (Auth::attempt($credentials)) {
+    //         /**  @var \App\Models\User $user **/
+    //         $user = Auth::user();
+    //         $token = $user->createToken('Personal Access Token')->accessToken;
+    //         return response()->json([
+    //             'token' => $token
+    //         ]);
+    //     }
+
+    //     return response()->json(['error' => 'Unauthorized'], 401);
+    // }
+
     public function login(Request $request)
     {
         $credentials = $request->only('login', 'password');
+        $token = $this->authService->authentificate($credentials);
 
-        if (Auth::attempt($credentials)) {
-            /**  @var \App\Models\User $user **/
-            $user = Auth::user();
-            $token = $user->createToken('Personal Access Token')->accessToken;
-            return response()->json([
-                'token' => $token
-            ]);
+        if ($token) {
+            return response()->json(['token' => $token]);
         }
 
         return response()->json(['error' => 'Unauthorized'], 401);
     }
+
 
     /**
      * @OA\Post(
@@ -101,15 +124,21 @@ class AuthController extends Controller
      *     security={{"bearerAuth": {}}},
      * )
      */
-    public function logout(Request $request)
-    {
-        /**  @var \App\Models\User $user **/
-        $user = Auth::user();
-        // Révoquer le jeton d'accès actuel
-        $user->token()->revoke();
+    // public function logout(Request $request)
+    // {
+    //     /**  @var \App\Models\User $user **/
+    //     $user = Auth::user();
+    //     // Révoquer le jeton d'accès actuel
+    //     $user->token()->revoke();
 
-        return response()->json([
-            'message' => 'Successfully logged out'
-        ]);
+    //     return response()->json([
+    //         'message' => 'Successfully logged out'
+    //     ]);
+    // }
+
+    public function logout()
+    {
+        $this->authService->logout();
+        return response()->json(['message' => 'Successfully logged out']);
     }
 }

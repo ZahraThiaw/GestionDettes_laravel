@@ -7,6 +7,7 @@ use App\Http\Controllers\DetteController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\EmailTestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -69,7 +70,8 @@ Route::prefix('v1')->group(function () {
 
         // Routes accessibles uniquement par les Admins
         Route::middleware('can:isBoutiquier')->group(function (){
-            Route::get('articles', [ArticleController::class, 'index']);
+            //Route::get('articles', [ArticleController::class, 'index']);
+            Route::get('articles', [ArticleController::class, 'findByDisponibilite']);
             Route::post('articles', [ArticleController::class, 'store']);
             Route::patch('articles/{id}', [ArticleController::class, 'update']);
             Route::get('articles/{id}', [ArticleController::class, 'show']);
@@ -87,6 +89,7 @@ Route::prefix('v1')->group(function () {
             Route::post('clients/{clientId}/register', [ClientController::class, 'registerClientForExistingClient']);
             Route::post('clients/telephone', [ClientController::class, 'filterByTelephone']);
 
+            Route::get('sendtestemail', [ClientController::class, 'sendTestEmail']);
         });
 
         // Routes accessibles uniquement par les Admins
@@ -99,3 +102,6 @@ Route::prefix('v1')->group(function () {
 
     });
 });
+
+
+

@@ -18,6 +18,7 @@ class UserController extends Controller
      * @OA\Post(
      *     path="/users",
      *     summary="Create a new user",
+     *     security={{"bearerAuth":{}}},
      *     tags={"Users"},
      *     @OA\RequestBody(
      *         required=true,
@@ -58,48 +59,95 @@ class UserController extends Controller
      *     )
      * )
      */
+    // public function store(UserRequest $request)
+    // {
+    //     // Démarrer une transaction pour garantir l'intégrité des données
+    //     DB::beginTransaction();
+
+    //     try {
+    //         // Obtenir les données validées de la requête
+    //         $data = $request->validated();
+
+    //         // Gérer le téléchargement de la photo
+    //         if ($request->hasFile('photo')) {
+    //             $photoPath = $request->file('photo')->store('public/photos');
+    //             $data['photo'] = basename($photoPath); // Stocker seulement le nom du fichier
+    //         }
+
+    //         // Créer l'utilisateur avec les données validées, y compris le role_id
+    //         $user = User::create($data);
+
+    //         // Confirmer la transaction
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'statut' => 'success',
+    //             'data' => $user,
+    //             'message' => 'Utilisateur créé avec succès.'
+    //         ], 201);
+
+    //     } catch (\Exception $e) {
+    //         // Annuler la transaction en cas d'erreur
+    //         DB::rollBack();
+
+    //         return response()->json([
+    //             'statut' => 'error',
+    //             'message' => 'Erreur lors de la création de l\'utilisateur: ' . $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
     public function store(UserRequest $request)
-    {
-        // Démarrer une transaction pour garantir l'intégrité des données
-        DB::beginTransaction();
+{
+    // Démarrer une transaction pour garantir l'intégrité des données
+    DB::beginTransaction();
 
-        try {
-            // Obtenir les données validées de la requête
-            $data = $request->validated();
+    try {
+        // Obtenir les données validées de la requête
+        $data = $request->validated();
 
-            // Gérer le téléchargement de la photo
-            if ($request->hasFile('photo')) {
-                $photoPath = $request->file('photo')->store('public/photos');
-                $data['photo'] = basename($photoPath); // Stocker seulement le nom du fichier
-            }
+        // Gérer le téléchargement de la photo
+        if ($request->hasFile('photo')) {
+            // Lire le fichier photo
+            $photo = $request->file('photo');
+            
+            // Convertir le fichier photo en base64
+            $photoData = file_get_contents($photo->getRealPath());
+            $base64Photo = base64_encode($photoData);
 
-            // Créer l'utilisateur avec les données validées, y compris le role_id
-            $user = User::create($data);
-
-            // Confirmer la transaction
-            DB::commit();
-
-            return response()->json([
-                'statut' => 'success',
-                'data' => $user,
-                'message' => 'Utilisateur créé avec succès.'
-            ], 201);
-
-        } catch (\Exception $e) {
-            // Annuler la transaction en cas d'erreur
-            DB::rollBack();
-
-            return response()->json([
-                'statut' => 'error',
-                'message' => 'Erreur lors de la création de l\'utilisateur: ' . $e->getMessage()
-            ], 500);
+            // Préfixer les données base64 pour indiquer le type d'image
+            $data['photo'] = 'data:image/' . $photo->getClientOriginalExtension() . ';base64,' . $base64Photo;
         }
+
+        // Créer l'utilisateur avec les données validées, y compris le role_id
+        $user = User::create($data);
+
+        // Confirmer la transaction
+        DB::commit();
+
+        return response()->json([
+            'statut' => 'success',
+            'data' => $user,
+            'message' => 'Utilisateur créé avec succès.'
+        ], 201);
+
+    } catch (\Exception $e) {
+        // Annuler la transaction en cas d'erreur
+        DB::rollBack();
+
+        return response()->json([
+            'statut' => 'error',
+            'message' => 'Erreur lors de la création de l\'utilisateur: ' . $e->getMessage()
+        ], 500);
     }
+}
+
 
      /**
      * @OA\Get(
      *     path="/users",
      *     summary="Retrieve a list of users",
+     *     security={{"bearerAuth":{}}},
      *     tags={"Users"},
      *     @OA\Parameter(
      *         name="role",

@@ -20,7 +20,7 @@ class RegisterRequest extends FormRequest
             'prenom' => 'required|string|max:255',
             'login' => 'required|string|max:255|unique:users,login',
             'password' => ['required', 'confirmed', new CustomPassword], // Utilisation de la règle CustomPassword
-            'photo' => 'required|image|max:2048',
+            'photo' => 'required|image|mimes:jpeg,png,jpg|max:40',
         ];
     }
 
@@ -41,7 +41,7 @@ class RegisterRequest extends FormRequest
             'password.confirmed' => 'Les mots de passe ne correspondent pas.',
             'photo.required' => 'La photo est obligatoire.',
             'photo.image' => 'La photo doit être une image.',
-            'photo.max' => 'La taille de la photo ne doit pas dépasser 2 Mo.',
+            'photo.max' => 'La taille de la photo ne doit pas dépasser 40 ko.',
         ];
     }
 }

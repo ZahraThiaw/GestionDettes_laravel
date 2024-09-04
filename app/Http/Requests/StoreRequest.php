@@ -24,7 +24,8 @@ class StoreRequest extends FormRequest
             'user.prenom' => 'required_with:user|string|max:255',
             'user.login' => 'required_with:user|string|max:255|unique:users,login',
             'user.password' => ['required_with:user', 'string', 'confirmed', new CustomPassword()], // Instanciation de la règle
-            'user.role' => ['required_with:user', 'string', 'in:Client'], // Assurez-vous que le rôle est Client
+            //'user.role' => ['required_with:user', 'string', 'in:Client'], // Assurez-vous que le rôle est Client
+            'user.photo' => 'required_with:user|image|mimes:jpeg,png,jpg|max:40',
         ];
     }
 
@@ -44,8 +45,12 @@ class StoreRequest extends FormRequest
             'user.password.string' => 'Le mot de passe doit être une chaîne de caractères.',
             'user.password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
             'user.password.custom_password' => 'Le mot de passe ne répond pas aux critères de sécurité.',
-            'user.role.required_with' => 'Le rôle est requis si des données utilisateur sont fournies.',
-            'user.role.in' => 'Le rôle doit être Client.',
+            // 'user.role.required_with' => 'Le rôle est requis si des données utilisateur sont fournies.',
+            // 'user.role.in' => 'Le rôle doit être Client.',
+            'user.photo.required_with' => 'La photo est obligatoire.',
+            'user.photo.image' => 'La photo doit être une image.',
+            'user.photo.mimes' => 'La photo doit être de type jpeg, png, ou jpg.',
+            'user.photo.max' => 'La taille de la photo ne doit pas dépasser 40 ko.',
             // Autres messages selon vos besoins
         ];
     }
