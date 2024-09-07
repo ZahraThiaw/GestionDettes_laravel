@@ -3,29 +3,23 @@
 namespace App\Repositories;
 
 use App\Events\ImageUploadEvent;
+use App\Mail\ClientLoyaltyCardMail;
 use App\Models\Client;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use App\Scopes\FilterByTelephoneScope;
 use App\Services\UploadService;
-use App\Services\UploadServiceInterface;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Support\Facades\Storage;
 use Dompdf\Dompdf;
 use Dompdf\Options;
-
+use Illuminate\Support\Facades\Mail;
 
 class ClientRepository implements ClientRepositoryInterface
 {
-    protected $uploadService;
-
-    public function __construct(UploadServiceInterface $uploadService)
-    {
-        $this->uploadService = $uploadService;
-    }
     
     public function all($filters = [], $withUser = false)
     {
@@ -80,9 +74,51 @@ class ClientRepository implements ClientRepositoryInterface
         return Client::findOrFail($id);
     }
 
-    public function create(array $data)
+    // public function create(array $data)
+    // {
+    //     return Client::create($data);
+    // }
+
+    public function create($data)
     {
-        return Client::create($data);
+        DB::beginTransaction();
+    
+        try {
+            // Récupérer les données client
+            $clientData = $data['client'];
+    
+            // Récupérer les données utilisateur si disponibles
+            $userData = isset($data['user']) ? $data['user'] : null;
+    
+            // Créer le client d'abord pour obtenir l'ID
+            $client = Client::create($clientData);
+    
+            // Si des données utilisateur existent, créer le compte utilisateur
+            if ($userData) {
+                // Récupérer l'ID du rôle "Client"
+                $roleClient = Role::where('name', 'Client')->first();
+    
+                // Vérifier que le rôle existe
+                if (!$roleClient) {
+                    throw new \Exception('Le rôle "Client" n\'existe pas.');
+                }
+    
+                $userData['role_id'] = $roleClient->id;
+    
+                // Créer l'utilisateur avec le rôle "Client"
+                $user = User::create($userData);
+                $client->user()->associate($user);
+                $client->save();
+            }
+    
+            DB::commit();
+            return [
+                'client' => $client->load('user'), // Charge l'utilisateur associé
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     public function update($id, array $data)
@@ -98,61 +134,8 @@ class ClientRepository implements ClientRepositoryInterface
         $client->delete();
     }
 
-//     public function registerClientForExistingClient(array $userData, $clientId)
-// {
-//     DB::beginTransaction();
 
-//     try {
-//         $client = Client::findOrFail($clientId);
-
-//         if ($client->user) {
-//             throw new \Exception('Ce client a déjà un compte utilisateur.');
-//         }
-
-//         // Vérifier si le login existe déjà
-//         if (User::where('login', $userData['login'])->exists()) {
-//             throw new \Exception('Le login existe déjà.');
-//         }
-
-//         $roleClient = Role::where('name', 'Client')->firstOrFail();
-//         $userData['role_id'] = $roleClient->id;
-
-//         // Téléchargement et encodage de la photo en base64
-//         if (isset($userData['photo'])) {
-//             $base64Photo = $this->uploadService->uploadImage($userData['photo']);
-//             $userData['photo'] = $base64Photo;
-//         }
-
-//         // Créer le compte utilisateur
-//         $user = User::create($userData);
-
-//         // Associer l'utilisateur au client
-//         $client->user()->associate($user);
-//         $client->save();
-
-//         // Générer la carte de fidélité avec un QR code
-//         $this->generateLoyaltyCard($client);
-
-//         // Inclure le QR code et l'image de la carte de fidélité dans la réponse
-//         return [
-//             'statut' => 'Success',
-//             'data' => [
-//                 'client' => $client,
-//                 'photo' => $client->photo,
-//                 'qr_code' => asset('storage/images/loyalty_card_' . $client->id . '.png') // Chemin vers l'image QR code
-//             ],
-//             'message' => 'Compte utilisateur créé avec succès pour le client.',
-//             'httpStatus' => 201
-//         ];
-
-//     } catch (\Exception $e) {
-//         DB::rollBack();
-//         throw $e;
-//     }
-// }
-
-
-public function registerClientForExistingClient(array $userData, $clientId)
+    public function registerClientForExistingClient(array $userData, $clientId)
     {
         DB::beginTransaction();
 
@@ -170,28 +153,15 @@ public function registerClientForExistingClient(array $userData, $clientId)
             $roleClient = Role::where('name', 'Client')->firstOrFail();
             $userData['role_id'] = $roleClient->id;
 
-            if (isset($userData['photo'])) {
-                if ($this->shouldUploadAsync()) {
-                    event(new ImageUploadEvent($userData['photo']));
-                } else {
-                    $base64Photo = $this->uploadService->uploadImage($userData['photo']);
-                    $userData['photo'] = $base64Photo;
-                }
-            }
-
             $user = User::create($userData);
             $client->user()->associate($user);
             $client->save();
-
-            $this->generateLoyaltyCard($client);
 
             DB::commit();
             return [
                 'statut' => 'Success',
                 'data' => [
                     'client' => $client,
-                    'photo' => $client->photo ?? null,
-                    'qr_code' => asset('storage/images/loyalty_card_' . $client->id . '.png')
                 ],
                 'message' => 'Compte utilisateur créé avec succès pour le client.',
                 'httpStatus' => 201
@@ -203,11 +173,6 @@ public function registerClientForExistingClient(array $userData, $clientId)
         }
     }
 
-
-    protected function shouldUploadAsync()
-    {
-        return config('upload.async', false);
-    }
 
     public function generateLoyaltyCard(Client $client)
     {
@@ -229,77 +194,114 @@ public function registerClientForExistingClient(array $userData, $clientId)
                       ->first();
     }
 
-
-    // public function generateLoyaltyCard(Client $client)
+    // public function generateClientPdf(Client $client)
     // {
-    //     // Créez le QR code avec les informations du client
-    //     $qrCode = new QrCode("Client: {$client->id} - {$client->surnom}");
+    //     // Vérifiez si la vue existe
+    //     if (!view()->exists('pdf.client_info')) {
+    //         throw new \Exception('La vue [pdf.client_info] est introuvable.');
+    //     }
+
+    //     $qrCode = new QrCode("Client: {$client->telephone}");
     //     $writer = new PngWriter();
-
-    //     // Définissez le nom du fichier pour l'image QR Code
-    //     $qrCodeFileName = 'loyalty_card_' . $client->id . '.png';
-
-    //     // Obtenez les données du QR code sous forme de chaîne binaire
+    //     $qrCodePath = 'loyalty_card_' . $client->id . '.png';
     //     $result = $writer->write($qrCode);
+    //     Storage::disk('public')->put('images/' . $qrCodePath, $result->getString());
 
-    //     // Sauvegardez le fichier dans le répertoire public/storage/images avec le disque public de Laravel
-    //     Storage::disk('public')->put('images/' . $qrCodeFileName, $result->getString());
-
-    //     // Mettez à jour le client avec le chemin de l'image QR Code
     //     $client->update([
-    //         'loyalty_card_image' => 'storage/images/' . $qrCodeFileName
+    //         'loyalty_card_image' => 'storage/images/' . $qrCodePath
     //     ]);
-    // }
-
-    // Ajoutez cette méthode pour générer le PDF
-    // public function generateClientPdf(Client $client, $qrCodePath)
-    // {
-    //     // Créez une instance de Dompdf
-    //     $dompdf = new Dompdf();
 
     //     // Chargez la vue Blade pour le contenu du PDF
-    //     $pdfcontent =Pdf::loadView('pdf.client_info', [
+    //     $pdf = PDF::loadView('pdf.client_info', [
     //         'client' => $client,
     //         'qrCodePath' => $qrCodePath,
-    //     ])->output();
-
-    //     // Chargez le HTML dans Dompdf
-    //     $dompdf->loadHtml($pdfcontent);
-
-    //     // Configurez le format du papier
-    //     $dompdf->setPaper('A4', 'portrait');
-
-    //     // Rendre le PDF
-    //     $dompdf->render();
+    //     ]);
 
     //     // Définir le chemin du fichier PDF
-    //     $pdfFilePath = storage_path('app/public/client_' . $client->id . '.pdf');
+    //     $pdfFilePath = storage_path('app/public/pdfs/client_' . $client->id . '.pdf');
 
     //     // Sauvegarder le fichier PDF
-    //     file_put_contents($pdfFilePath, $dompdf->output());
+    //     $pdf->save($pdfFilePath);
 
     //     return $pdfFilePath;
     // }
 
-    public function generateClientPdf(Client $client, $qrCodePath)
-    {
-        // Vérifiez si la vue existe
-        if (!view()->exists('pdf.client_info')) {
-            throw new \Exception('La vue [pdf.client_info] est introuvable.');
-        }
 
-        // Chargez la vue Blade pour le contenu du PDF
-        $pdf = PDF::loadView('pdf.client_info', [
-            'client' => $client,
-            'qrCodePath' => $qrCodePath,
-        ]);
+//     public function generateClientPdf(Client $client)
+// {
+//     // Vérifiez si la vue existe
+//     if (!view()->exists('pdf.client_info')) {
+//         throw new \Exception('La vue [pdf.client_info] est introuvable.');
+//     }
 
-        // Définir le chemin du fichier PDF
-        $pdfFilePath = storage_path('app/public/pdfs/client_' . $client->id . '.pdf');
+//     // Générer le QR Code
+//     $qrCode = new QrCode("Client: {$client->telephone}");
+//     $writer = new PngWriter();
+//     $qrCodeFileName = 'loyalty_card_' . $client->id . '.png';
+//     $qrCodePath = 'images/' . $qrCodeFileName; // Chemin relatif public
+//     $result = $writer->write($qrCode);
 
-        // Sauvegarder le fichier PDF
-        $pdf->save($pdfFilePath);
+//     // Sauvegarder l'image du QR Code
+//     Storage::disk('public')->put($qrCodePath, $result->getString());
 
-        return $pdfFilePath;
+//     // Mettre à jour le chemin de la carte de fidélité
+//     $client->update([
+//         'loyalty_card_image' => $qrCodePath
+//     ]);
+
+//     // Charger la vue Blade pour le contenu du PDF
+//     $pdf = PDF::loadView('pdf.client_info', [
+//         'client' => $client,
+//         'qrCodeFileName' => $qrCodeFileName,
+//     ]);
+//     var_dump($qrCodeFileName);
+   
+//     $qrCodePath = public_path('storage/' . $qrCodeFileName);
+//     // Définir le chemin du fichier PDF
+//     $pdfFilePath = storage_path('app/public/pdfs/client_' . $client->id . '.pdf');
+
+//     // Sauvegarder le fichier PDF
+//     $pdf->save($pdfFilePath);
+
+//     return $pdfFilePath;
+// }
+
+public function generateClientPdf(Client $client)
+{
+    // Vérifiez si la vue existe
+    if (!view()->exists('pdf.client_info')) {
+        throw new \Exception('La vue [pdf.client_info] est introuvable.');
     }
+
+    // Générer le QR Code
+    $qrCode = new QrCode("Client: {$client->telephone}");
+    $writer = new PngWriter();
+    $qrCodeFileName = 'loyalty_card_' . $client->id . '.png';
+    $qrCodePath = 'images/' . $qrCodeFileName; // Chemin relatif public
+    $result = $writer->write($qrCode);
+
+    // Sauvegarder l'image du QR Code
+    Storage::disk('public')->put($qrCodePath, $result->getString());
+
+    // Mettre à jour le chemin de la carte de fidélité
+    $client->update([
+        'loyalty_card_image' => $qrCodePath
+    ]);
+
+    // Charger la vue Blade pour le contenu du PDF
+    $pdf = PDF::loadView('pdf.client_info', [
+        'client' => $client,
+        'qrCodeFileName' => asset('storage/' . $qrCodePath), // Utiliser asset pour le chemin complet
+        'clientPhoto' => asset('storage/' . $client->user->photo) // Chemin complet pour la photo
+    ]);
+
+    // Définir le chemin du fichier PDF
+    $pdfFilePath = storage_path('app/public/pdfs/client_' . $client->id . '.pdf');
+
+    // Sauvegarder le fichier PDF
+    $pdf->save($pdfFilePath);
+
+    return $pdfFilePath;
+}
+
 }

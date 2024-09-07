@@ -20,5 +20,5 @@ interface ClientRepositoryInterface
     public function registerClientForExistingClient(array $userData, $clientId);
     public function findByTelephone($telephone);
     public function generateLoyaltyCard(Client $client);
-    public function generateClientPdf(Client $client, $qrCodePath);
+    public function generateClientPdf(Client $client);
 }

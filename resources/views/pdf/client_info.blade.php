@@ -7,9 +7,11 @@
     <h1>Informations du Client</h1>
     <p><strong>Nom :</strong> {{ $client->user->nom }}</p>
     <p><strong>Prénom :</strong> {{ $client->user->prenom }}</p>
+
     <p><strong>Photo :</strong></p>
-    <img src="{{ $client->user->photo}}" alt="Photo du client" style="width: 150px;">
-    <p><strong>Code QR :</strong></p>
-    <img src="{{ asset('storage/images/' .'loyalty_card_' . $client->id . '.png') }}" alt="Code QR">
+
+<p><strong>Code QR :</strong></p>
+<img src="data:image/png;base64,{{ base64_encode(file_get_contents($qrCodeFileName)) }}" alt="Code QR" style="width: 150px;">
+
 </body>
 </html>

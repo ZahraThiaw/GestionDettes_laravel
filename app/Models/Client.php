@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Events\ClientCreated;
+use App\Jobs\SendLoyaltyCardEmail;
+use App\Observers\ClientObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Scopes\FilterByTelephoneScope;
@@ -15,6 +19,7 @@ class Client extends Model
         'telephone',
         'adresse',
         'user_id',
+        'qrcode',
     ];
 
     protected $hidden = [
@@ -23,9 +28,15 @@ class Client extends Model
         'updated_at',
     ];
 
+    //#[ObservedBy([ClientObserver::class])]
+
     protected static function booted()
     {
         static::addGlobalScope(new FilterByTelephoneScope(request()->input('telephone')));
+
+        // Enregistrer l'observateur
+        //static::observe(ClientObserver::class);
+        //dd('ok');
     }
 
     public function user()
@@ -43,5 +54,6 @@ class Client extends Model
     public function hasActiveAccount()
     {
         return $this->user && $this->user->active; // Si le client a un utilisateur associé et si son compte est actif
-    }
+    }  
+
 }

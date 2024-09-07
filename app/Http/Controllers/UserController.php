@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
+use App\Jobs\StoreImageInCloud;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
@@ -106,21 +107,28 @@ class UserController extends Controller
         // Obtenir les données validées de la requête
         $data = $request->validated();
 
-        // Gérer le téléchargement de la photo
-        if ($request->hasFile('photo')) {
-            // Lire le fichier photo
-            $photo = $request->file('photo');
+        // // Gérer le téléchargement de la photo
+        // if ($request->hasFile('photo')) {
+        //     // Lire le fichier photo
+        //     $photo = $request->file('photo');
             
-            // Convertir le fichier photo en base64
-            $photoData = file_get_contents($photo->getRealPath());
-            $base64Photo = base64_encode($photoData);
+        //     // // Convertir le fichier photo en base64
+        //     // $photoData = file_get_contents($photo->getRealPath());
+        //     // $base64Photo = base64_encode($photoData);
 
-            // Préfixer les données base64 pour indiquer le type d'image
-            $data['photo'] = 'data:image/' . $photo->getClientOriginalExtension() . ';base64,' . $base64Photo;
-        }
+        //     // // Préfixer les données base64 pour indiquer le type d'image
+        //     // $data['photo'] = 'data:image/' . $photo->getClientOriginalExtension() . ';base64,' . $base64Photo;
+        // }
 
         // Créer l'utilisateur avec les données validées, y compris le role_id
         $user = User::create($data);
+
+        // if (request()->hasFile('photo')) {
+        //     $file = request()->file('photo');
+        //     // Sauvegarder le fichier temporairement
+        //     $tempPath = $file->store('temp');
+        //     StoreImageInCloud::dispatch($user, $tempPath);
+        // }
 
         // Confirmer la transaction
         DB::commit();
@@ -250,5 +258,7 @@ class UserController extends Controller
             'message' => 'Liste des utilisateurs récupérée avec succès.',
         ], 200);
     }
+
+    
 
 }

@@ -3,6 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Jobs\SendLoyaltyCardJob;
+use App\Jobs\StoreImageInCloud;
+use App\Observers\UserObserver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -69,30 +73,9 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    
-    // /**
-    //  * Crée un nouveau token avec des claims personnalisés.
-    //  *
-    //  * @param  string  $tokenName
-    //  * @return string
-    //  */
-    // public function createTokenWithClaims($tokenName)
-    // {
-    //     // Création du token
-    //     $token = $this->createToken($tokenName)->accessToken;
-
-    //     // Ajouter des claims personnalisés
-    //     $server = app(AuthorizationServer::class);
-    //     $accessToken = $server->getTokenRepository()->find($token);
-
-    //     $accessToken->setClaims([
-    //         'nom' => $this->nom,
-    //         'prenom' => $this->prenom,
-    //         'login' => $this->login,
-    //         'role_id' => $this->role_id,
-    //         'photo' => $this->photo,
-    //     ]);
-
-    //     return $token;
-    // }
+    protected static function booted()
+    {
+        // Enregistrer l'observateur
+        static::observe(UserObserver::class);
+    }
 }

@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use App\Services\UploadServiceInterface;
+use App\Services\Contracts\IUploadService;
 use Cloudinary\Cloudinary;
-use Cloudinary\Transformation\Transformation;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-class CloudinaryUploadService implements UploadServiceInterface
+class CloudinaryUploadService implements IUploadService
 {
     protected $cloudinary;
 
@@ -25,20 +25,17 @@ class CloudinaryUploadService implements UploadServiceInterface
         ]);
     }
 
-    public function uploadImage($imageFile)
+    public function upload($file): string
     {
-        if ($imageFile instanceof UploadedFile) {
-            $realPath = $imageFile->getRealPath();
-        } elseif (is_string($imageFile)) {
-            $realPath = $imageFile;
+        if ($file instanceof UploadedFile) {
+            $realPath = $file->getRealPath();
+        } elseif (is_string($file)) {
+            $realPath = $file;
         } else {
             throw new \Exception('Type de fichier non supporté');
         }
 
-        // Upload the image to Cloudinary
         $result = $this->cloudinary->uploadApi()->upload($realPath);
-
-        // Return the secure URL of the uploaded image
         return $result['secure_url'];
     }
 }

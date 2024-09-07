@@ -1,12 +1,19 @@
 <?php
+// app/Facades/UploadFacade.php
+
 namespace App\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
 class UploadFacade extends Facade
 {
+    /**
+     * Get the registered name of the component.
+     *
+     * @return string
+     */
     protected static function getFacadeAccessor()
     {
-        return 'uploadservice'; // clé qui sera utilisée pour accéder au service
+        return 'uploadservice';
     }
 }

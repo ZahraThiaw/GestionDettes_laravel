@@ -11,34 +11,26 @@ use App\Enums\StatutResponse;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\ClientResource;
 use App\Http\Resources\UserResource;
+use App\Jobs\StoreImageInCloud;
 use App\Models\Role;
 use Illuminate\Http\Request;
-use App\Facades\ClientServiceFacade as ClientService;
+//use App\Facades\ClientServiceFacade as ClientService;
 use App\Mail\ClientLoyaltyCardMail;
 use App\Rules\Telephone;
+use App\Services\ClientServiceInterface;
 use Illuminate\Support\Facades\DB; // Importer la façade DB pour les transactions
 use Illuminate\Support\Facades\Mail;
 
 class ClientController extends Controller
 {
-   // use Response;
+    protected $clientService;
 
-   public function sendTestEmail(Request $request)
+    public function __construct(ClientServiceInterface $clientService)
     {
-        $client = (object)[
-            'name' => 'Fatimata Thiaw',
-            'email' => 'fatimatathiaw6@gmail.com',
-        ];
-
-        $loyaltyCard = (object)[
-            'code' => 'LOYAL1234',
-        ];
-
-        Mail::to($client->email)->send(new ClientLoyaltyCardMail($client, $loyaltyCard));
-
-        return response()->json(['message' => 'Email envoyé avec succès']);
+        $this->clientService = $clientService;
     }
-
+   // use Response;
+   
         /**
      * @OA\Get(
      *     path="/clients",
@@ -122,7 +114,7 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only(['telephone', 'sortsurnom', 'sort-surnom', 'comptes', 'active', 'include']);
-        $clients = ClientService::getAllClients($filters);
+        $clients = $this->clientService->getAllClients($filters);
 
         if ($clients->isEmpty()) {
             return [
@@ -207,7 +199,7 @@ class ClientController extends Controller
         // Récupération du téléphone validé
         $telephone = $validatedData['telephone'];
 
-        $client = ClientService::getClientByTelephone($telephone);
+        $client = $this->clientService->getClientByTelephone($telephone);
 
         if (!$client) {
             return [
@@ -277,7 +269,7 @@ class ClientController extends Controller
     public function showClientWithUser($id)
     {
         try {
-            $client = ClientService::getClientById($id, true);
+            $client = $this->clientService->getClientById($id, true);
             $clientData = [
                 'client' => new ClientResource($client),
                 'user' => $client->user ? new UserResource($client->user) : null,
@@ -361,7 +353,7 @@ class ClientController extends Controller
     {
         try {
             $withUser = $request->has('include') && $request->query('include') === 'user';
-            $client = ClientService::getClientById($id, $withUser);
+            $client = $this->clientService->getClientById($id, $withUser);
             
             return [
                 'statut' => 'Success',
@@ -416,91 +408,7 @@ class ClientController extends Controller
      *     )
      * )
      */
-
-    // public function store(StoreRequest $request)
-    // {
-    //     try {
-    //         $userData = $request->validated();
-    //         $clientData = $request->only(['surnom', 'telephone', 'adresse']);
-
-    //         if (User::where('login', $userData['login'])->exists()) {
-    //             return [
-    //                 'statut' => 'Echec',
-    //                 'data' => [],
-    //                 'message' => 'Le nom d\'utilisateur est déjà pris.',
-    //                 'httpStatus' => 409
-    //             ];
-    //         }
-
-    //         $client = ClientService::createClient(array_merge($clientData, ['user' => $userData]));
-
-    //         return [
-    //             'statut' => 'Success',
-    //             'data' => new UserResource($client->user),
-    //             'message' => 'Utilisateur enregistré avec succès.',
-    //             'httpStatus' => 200
-    //         ];
-    //     } catch (\Exception $e) {
-    //         return [
-    //             'statut' => 'Echec',
-    //             'data' => [],
-    //             'message' => 'Erreur lors de l\'enregistrement de l\'utilisateur : ' . $e->getMessage(),
-    //             'httpStatus' => 500
-    //         ];
-    //     }
-    // }
-
-//     public function store(StoreRequest $request)
-// {
-//     try {
-//         // Valider les données client et utilisateur grâce à StoreRequest
-//         $validatedData = $request->validated();
-
-//         // Extraire les données du client
-//         $clientData = [
-//             'surnom' => $validatedData['surnom'],
-//             'telephone' => $validatedData['telephone'],
-//             'adresse' => $validatedData['adresse'] ?? null,
-//         ];
-
-//         // Extraire les données utilisateur si elles existent
-//         $userData = $validatedData['user'] ?? null;
-
-//         // Vérifier si le login utilisateur existe déjà si des données utilisateur sont fournies
-//         if ($userData && User::where('login', $userData['login'])->exists()) {
-//             return [
-//                 'statut' => 'Echec',
-//                 'data' => [],
-//                 'message' => 'Le nom d\'utilisateur est déjà pris.',
-//                 'httpStatus' => 409
-//             ];
-//         }
-
-//         // Appel à ClientService pour créer le client avec ou sans compte utilisateur
-//         $client = ClientService::createClient([
-//             'client' => $clientData,
-//             'user' => $userData // Ne pas inclure si userData est null
-//         ]);
-
-//         // Retourner la réponse avec succès
-//         return[
-//             'statut' => 'Success',
-//             'data' => $userData ? new UserResource($client->user) : $client,
-//             'message' => 'Client enregistré avec succès.',
-//             'httpStatus' => 200
-//         ];
-
-//     } catch (\Exception $e) {
-//         // Retourner une réponse en cas d'erreur
-//         return [
-//             'statut' => 'Echec',
-//             'data' => [],
-//             'message' => 'Erreur lors de l\'enregistrement : ' . $e->getMessage(),
-//             'httpStatus' => 500
-//         ];
-//     }
-// }
-
+    
 public function store(StoreRequest $request)
 {
     try {
@@ -527,18 +435,21 @@ public function store(StoreRequest $request)
             ];
         }
 
-        // Appel à ClientService pour créer le client avec ou sans compte utilisateur
-        //$clientService = new \App\Services\ClientService(/* injecter les dépendances nécessaires ici */);
-        //$client = ClientService::createClient
-        $client = ClientService::createClient([
+        $client = $this->clientService->createClient([
             'client' => $clientData,
             'user' => $userData
         ]);
 
+        // if (request()->hasFile('photo')) {
+        //     $file = request()->file('photo');
+        //     // Sauvegarder le fichier temporairement
+        //     $tempPath = $file->store('temp');
+        //     StoreImageInCloud::dispatch($userData, $tempPath);
+        // }
+
         // Préparer les données à retourner
         $responseData = [
             'client' => $client,
-            //'user' => $client->user ?? null // Inclure les données de l'utilisateur si elles existent
         ];
 
         // Retourner la réponse avec succès
@@ -651,8 +562,8 @@ public function store(StoreRequest $request)
      {
          try {
              $userData = $request->validated();
-             $client = ClientService::registerClientForExistingClient($userData, $clientId);
-     
+             $client = $this->clientService->registerClientForExistingClient($userData, $clientId);
+
              return [
                  'statut' => StatutResponse::Success,
                  'data' => new ClientResource($client),
@@ -719,7 +630,7 @@ public function store(StoreRequest $request)
     public function update($id, UpdateRequest $request)
     {
         try {
-            $client = ClientService::updateClient($id, $request->validated());
+            $client = $this->clientService->updateClient($id, $request->validated());
 
             return [
                 'statut' => 'Success',
@@ -772,7 +683,7 @@ public function store(StoreRequest $request)
     public function destroy($id)
     {
         try {
-            ClientService::deleteClient($id);
+            $this->clientService->deleteClient($id);
 
             return [
                 'statut' => 'Success',

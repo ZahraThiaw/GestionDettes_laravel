@@ -1,26 +1,50 @@
-<?php
-
+<?Php
 // app/Services/UploadService.php
-namespace App\Services;
 
-use Illuminate\Support\Facades\Storage;
+// namespace App\Services;
 
-class UploadService implements UploadServiceInterface
-{
-    public function uploadImage($imageFile)
-    {
-        // Assurez-vous que le fichier est une image
-        if (!$imageFile->isValid() || !in_array($imageFile->extension(), ['jpg', 'jpeg', 'png', 'svg'])) {
-            throw new \Exception('Invalid image file.');
-        }
+// use App\Services\Contracts\IUploadService;
+// use Illuminate\Http\UploadedFile;
+// // use Symfony\Component\HttpFoundation\File\UploadedFile;
+// use Illuminate\Support\Facades\Storage;
 
-        // Définir le chemin de stockage
-        $path = $imageFile->store('images', 'public');
+// class UploadService implements IUploadService
+// {
 
-        // Lire le contenu du fichier et l'encoder en base64
-        $fileContent = Storage::disk('public')->get($path);
-        $base64Encoded = base64_encode($fileContent);
+//     public function upload(UploadedFile $file)
+//     {
+//         $path = $file->store('images', 'public');
+//         return Storage::url($path);
+//     }
 
-        return $base64Encoded;
-    }
-}
+//     public function delete(UploadedFile $file)
+//     {
+//         $path = $file->store('images', 'public');
+//         return Storage::delete($path);
+//     }
+
+//     public function getUrl(UploadedFile $file)
+//     {
+//         $path = $file->store('images', 'public');
+//         return Storage::url($path);
+//     }
+
+//     public function uploadAndEncode(UploadedFile $file): array
+//     {
+//          // Store the file
+//             $path = $file->store('images', 'public');
+
+//             // Retrieve the file's content
+//             $fileContent = Storage::disk('public')->get($path);
+
+//             // Encode the file's content in Base64
+//             $base64Content = base64_encode($fileContent);
+
+//             return [
+//                 'path' => $path,
+//                 'base64' => $base64Content,
+//             ];
+//         }
+//     }
+
+
