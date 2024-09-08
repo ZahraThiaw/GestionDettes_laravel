@@ -6,20 +6,15 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class DetteResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
-     */
-    public function toArray($request)
+    public function toArray($request): array
     {
         return [
             'id' => $this->id,
             'date' => $this->date,
             'montant' => $this->montant,
-            'montantDu' => $this->montantDu,
-            'montantRestant' => $this->montantRestant,
+            'client' => new ClientResource($this->whenLoaded('client')),
+            'articles' => ArticleDetteResource::collection($this->whenLoaded('articles')),
+            'paiements' => PaiementResource::collection($this->whenLoaded('paiements')), // Inclure les paiements associés
         ];
     }
 }

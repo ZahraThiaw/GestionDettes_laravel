@@ -408,7 +408,7 @@ class ClientController extends Controller
      *     )
      * )
      */
-    
+
 public function store(StoreRequest $request)
 {
     try {
@@ -562,8 +562,8 @@ public function store(StoreRequest $request)
      {
          try {
              $userData = $request->validated();
-             $client = $this->clientService->registerClientForExistingClient($userData, $clientId);
-
+             $this->clientService->registerClientForExistingClient($userData, $clientId);
+             $client = Client::latest()->first();
              return [
                  'statut' => StatutResponse::Success,
                  'data' => new ClientResource($client),

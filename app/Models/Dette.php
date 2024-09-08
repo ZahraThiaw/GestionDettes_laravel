@@ -9,28 +9,50 @@ class Dette extends Model
 {
     use HasFactory;
 
+    // La table associée à ce modèle
+    protected $table = 'dettes';
+
+    // Les colonnes qui peuvent être modifiées
     protected $fillable = [
-        'date', 
-        'montant', 
-        'montantDu', 
-        'montantRestant', 
-        'client_id'
+        'date',
+        'montant',
+        'client_id',
     ];
 
     protected $hidden = [
         'created_at',
-        'updated_at',
+        'updated_at'
     ];
 
     protected $guarded = [
         'id', // La clé primaire ne peut pas être modifiée
     ];
 
-    // Relation : Une dette appartient à un client
+    /**
+     * Relation avec le modèle Client.
+     * Une dette appartient à un client.
+     */
     public function client()
     {
         return $this->belongsTo(Client::class);
     }
-    
-}
 
+    /**
+     * Relation avec le modèle Paiement.
+     * Une dette peut avoir plusieurs paiements.
+     */
+    public function paiements()
+    {
+        return $this->hasMany(Paiement::class);
+    }
+
+    /**
+     * Relation avec les articles via la table pivot article_dette.
+     */
+    public function articles()
+    {
+        return $this->belongsToMany(Article::class, 'article_dettes')
+                    ->withPivot('qteVente', 'prixVente')
+                    ->withTimestamps();
+    }
+}

@@ -43,4 +43,11 @@ class Article extends Model
 
         return $query;
     }
+
+    public function dettes()
+    {
+        return $this->belongsToMany(Dette::class, 'article_dettes')
+                    ->withPivot('qteVente', 'prixVente')
+                    ->withTimestamps();
+    }
 }

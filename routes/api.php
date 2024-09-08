@@ -90,6 +90,9 @@ Route::prefix('v1')->group(function () {
             Route::post('clients/telephone', [ClientController::class, 'filterByTelephone']);
 
             Route::get('sendtestemail', [ClientController::class, 'sendTestEmail']);
+
+            Route::post('dettes', [DetteController::class, 'store']);
+            Route::get('dettes', [DetteController::class, 'index']);
         });
 
         // Routes accessibles uniquement par les Admins

@@ -9,6 +9,8 @@ use App\Repositories\ArticleRepository;
 use App\Repositories\ArticleRepositoryImpl;
 use App\Repositories\ClientRepository;
 use App\Repositories\ClientRepositoryInterface;
+use App\Repositories\DetteRepository;
+use App\Repositories\DetteRepositoryInterface;
 use App\Services\ArticleService;
 use App\Services\ArticleServiceImpl;
 use App\Services\ClientService;
@@ -18,6 +20,8 @@ use App\Services\Contracts\ILoyaltyCardService;
 use App\Services\Contracts\IQrCodeService;
 // use App\Services\CloudUploadService;
 use App\Services\Contracts\IUploadService;
+use App\Services\DetteService;
+use App\Services\DetteServiceInterface;
 use App\Services\LoyaltyCardService;
 use App\Services\QrCodeService;
 
@@ -50,6 +54,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(IUploadService::class, CloudinaryUploadService::class);
         $this->app->singleton(IQrCodeService::class, QrCodeService::class);
         $this->app->singleton(ILoyaltyCardService::class, LoyaltyCardService::class);
+
+
+        // Lier l'interface DetteRepository à son implémentation
+        $this->app->bind(DetteRepositoryInterface::class, DetteRepository::class);
+
+        // Lier l'interface DetteService à son implémentation
+        $this->app->bind(DetteServiceInterface::class, DetteService::class);
     }
 
     // public function boot()

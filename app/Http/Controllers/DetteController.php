@@ -4,13 +4,92 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Http\Resources\DetteResource;
-use App\Traits\Response; // Assurez-vous d'importer le trait
+//use App\Traits\Response; // Assurez-vous d'importer le trait
 use App\Enums\StatutResponse;
+use App\Http\Requests\StoreDetteRequest;
 use App\Http\Resources\ClientResource;
+use App\Models\Dette;
+use App\Services\DetteServiceInterface;
+use Illuminate\Http\Request;
 
 class DetteController extends Controller
 {
-    use Response; // Utiliser le trait Response
+    //use Response; // Utiliser le trait Response
+
+
+    protected $detteService;
+
+    public function __construct(DetteServiceInterface $detteService)
+    {
+        $this->detteService = $detteService;
+    }
+
+    public function store(StoreDetteRequest $request)
+    {
+        $data = $request->validated();
+
+        try {
+            // Enregistrer la dette et ses détails
+            $this->detteService->createDetteWithDetails($data); 
+
+            $dette = Dette::latest()->first(); // Assurez-vous d'utiliser la méthode appropriée pour récupérer la dette enregistrée
+            return [
+                'statut' => 'Success',
+                'data' => new DetteResource($dette),
+                'message' => 'Dette enregistrée avec succès.',
+                'httpStatus' => 201
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'statut' => 'Echec',
+                'data' => [],
+                'message' => 'Dette non enregistrée.',
+                'httpStatus' => 411
+            ];
+        }
+    }
+
+    // Méthode pour lister toutes les dettes ou filtrer par statut
+    public function index(Request $request)
+    {
+        try {
+            $statut = $request->query('statut');
+            
+            if ($statut) {
+                $dettes = $this->detteService->getDettesByStatus($statut);
+            } else {
+                $dettes = $this->detteService->getAllDettes();
+            }
+
+            // Vérifier si la collection est vide
+            if ($dettes->isEmpty()) {
+                return [
+                    'statut' => 'Success',
+                    'data' => [],
+                    'message' => 'Aucune dette trouvée.',
+                    'httpStatus' => 404
+                ];
+            }
+
+
+            return [
+                'statut' => 'Success',
+                'data' => DetteResource::collection($dettes),
+                'message' => 'Dettes récupérées avec succès.',
+                'httpStatus' => 200
+            ];
+        } catch (\Exception $e) {
+            return [
+                'statut' => 'Echec',
+                'data' => null,
+                'message' => 'Erreur lors de la récupération des dettes : ' . $e->getMessage(),
+                'httpStatus' => 500
+            ];
+        }
+    }
+
+
 
     /**
      * Liste les dettes d'un client
@@ -78,7 +157,12 @@ class DetteController extends Controller
 
         // Si le client n'existe pas, retourner une erreur
         if (!$client) {
-            return $this->sendResponse([], StatutResponse::Echec, 'Client non trouvé.', 404);
+            return [
+                'statut' => 'Echec',
+                'data' => [],
+                'message' => 'Client non trouvé.',
+                'httpStatus' => 404
+            ];
         }
 
         // Récupérer les dettes du client sans les détails
@@ -91,12 +175,14 @@ class DetteController extends Controller
         ];
 
         // Retourner la réponse formatée avec les informations du client et ses dettes
-        return $this->sendResponse(
-            $responseData,
-            StatutResponse::Success,
-            'client trouvé',
-            200
-        );
+        return[
+            'statut' => 'Success',
+            'data' => $responseData,
+            'message' => 'client trouvé',
+            'httpStatus' => 200
+        ];
     }
+
+
 
 }

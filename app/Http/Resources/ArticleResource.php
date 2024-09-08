@@ -19,7 +19,6 @@ class ArticleResource extends JsonResource
             'libelle' => $this->libelle,
             'prix' => $this->prix,
             'qteStock' => $this->qteStock,
-            // Ajoute les autres champs nécessaires ici
         ];
     }
 }
