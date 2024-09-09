@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Exceptions\RepositoryException;
 use App\Models\Dette;
 use App\Models\Article;
 use App\Models\ArticleDette;
@@ -73,5 +74,40 @@ class DetteRepository implements DetteRepositoryInterface
         });
     }
 
+    public function getDetteById(int $id)
+    {
+        return Dette::with(['articles', 'paiements'])->find($id);
+    }
 
+    public function getArticlesByDetteId(int $detteId)
+    {
+        $dette = Dette::find($detteId);
+        if (!$dette) {
+            throw new RepositoryException("Dette not found.");
+        }
+
+        return $dette->articles;
+    }
+
+    public function getPaiementsByDetteId(int $detteId)
+    {
+        $dette = Dette::find($detteId);
+        if (!$dette) {
+            throw new RepositoryException("Dette not found.");
+        }
+
+        return $dette->paiements;
+    }
+
+    public function createPaiementForDette(int $detteId, array $paiementData)
+    {
+        $dette = Dette::find($detteId);
+
+        if (!$dette) {
+            throw new RepositoryException("Dette not found.");
+        }
+
+        // Créer le paiement
+        return $dette->paiements()->create($paiementData);
+    }
 }

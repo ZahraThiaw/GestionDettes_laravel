@@ -7,7 +7,10 @@ use App\Http\Resources\DetteResource;
 //use App\Traits\Response; // Assurez-vous d'importer le trait
 use App\Enums\StatutResponse;
 use App\Http\Requests\StoreDetteRequest;
+use App\Http\Requests\StorePaiementRequest;
+use App\Http\Resources\ArticleDetteResource;
 use App\Http\Resources\ClientResource;
+use App\Http\Resources\PaiementResource;
 use App\Models\Dette;
 use App\Services\DetteServiceInterface;
 use Illuminate\Http\Request;
@@ -89,67 +92,6 @@ class DetteController extends Controller
         }
     }
 
-
-
-    /**
-     * Liste les dettes d'un client
-     *
-     * @param int $id
-     *
-     * @OA\Get(
-     *     path="/clients/{id}/dettes",
-     *     summary="Liste les dettes d'un client",
-     *     tags={"Dette"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID du client dont on veut récupérer les dettes",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Détails du client avec ses dettes",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", example="success"),
-     *             @OA\Property(property="message", type="string", example="Client trouvé"),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(
-     *                     property="client",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="nom", type="string", example="Dupont"),
-     *                     @OA\Property(property="prenom", type="string", example="Jean"),
-     *                     @OA\Property(property="telephone", type="string", example="0123456789"),
-     *                     @OA\Property(property="adresse", type="string", example="123 Rue de la République")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="dettes",
-     *                     type="array",
-     *                     @OA\Items(
-     *                         type="object",
-     *                         @OA\Property(property="id", type="integer", example=1),
-     *                         @OA\Property(property="date", type="string", format="date", example="2024-09-01"),
-     *                         @OA\Property(property="montant", type="number", format="float", example=150.00),
-     *                         @OA\Property(property="montantDu", type="number", format="float", example=100.00),
-     *                         @OA\Property(property="montantRestant", type="number", format="float", example=50.00)
-     *                     )
-     *                 )
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Client non trouvé",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="string", example="error"),
-     *             @OA\Property(property="message", type="string", example="Client non trouvé.")
-     *         )
-     *     )
-     * )
-     */
     public function getClientDettes($id)
     {
         // Récupérer le client par son ID
@@ -184,5 +126,119 @@ class DetteController extends Controller
     }
 
 
+    public function show($id)
+    {
+        try {
+            $dette = $this->detteService->getDetteById($id);
+
+            if (!$dette) {
+                return [
+                    'statut' => 'Echec',
+                    'data' => null,
+                    'message' => 'Dette non trouvée.',
+                    'httpStatus' => 404
+                ];
+            }
+
+            return [
+                'statut' => 'Success',
+                'data' => new DetteResource($dette),
+                'message' => 'Dette récupérée avec succès.',
+                'httpStatus' => 200
+            ];
+        } catch (\Exception $e) {
+            return [
+                'statut' => 'Echec',
+                'data' => null,
+                'message' => 'Erreur lors de la récupération de la dette : ' . $e->getMessage(),
+                'httpStatus' => 500
+            ];
+        }
+    }
+
+    public function listArticles($id)
+    {
+        try {
+            // Charger uniquement la dette avec ses articles
+            $dette = Dette::with('articles')->findOrFail($id);
+
+            // Construire manuellement la réponse pour inclure seulement les champs nécessaires
+            $response = [
+                'id' => $dette->id,
+                'date' => $dette->date,
+                'montant' => $dette->montant,
+                'client' => $dette->client->id,
+                'articles' => ArticleDetteResource::collection($dette->articles) // Inclure uniquement les articles
+            ];
+
+            return [
+                'statut' => 'Success',
+                'data' => $response,
+                'message' => 'Articles récupérés avec succès.',
+                'httpStatus' => 200
+            ];
+        } catch (\Exception $e) {
+            return [
+                'statut' => 'Echec',
+                'data' => null,
+                'message' => 'Erreur lors de la récupération des articles : ' . $e->getMessage(),
+                'httpStatus' => 500
+            ];
+        }
+    }
+
+    public function listPaiements($id)
+    {
+        try {
+            // Charger uniquement la dette avec ses paiements
+            $dette = Dette::with('paiements')->findOrFail($id);
+
+            // Construire manuellement la réponse pour inclure seulement les champs nécessaires
+            $response = [
+                'id' => $dette->id,
+                'date' => $dette->date,
+                'montant' => $dette->montant,
+                'client' => $dette->client->id,
+                'paiements' => PaiementResource::collection($dette->paiements) // Inclure uniquement les paiements
+            ];
+
+            return [
+                'statut' => 'Success',
+                'data' => $response,
+                'message' => 'Paiements récupérés avec succès.',
+                'httpStatus' => 200
+            ];
+        } catch (\Exception $e) {
+            return [
+                'statut' => 'Echec',
+                'data' => null,
+                'message' => 'Erreur lors de la récupération des paiements : ' . $e->getMessage(),
+                'httpStatus' => 500
+            ];
+        }
+    }
+
+    public function addPaiement(StorePaiementRequest $request, $detteId)
+    {
+        $data = $request->validated();
+
+        try {
+            // Ajouter le paiement à la dette via le service
+            $paiementDetails=$this->detteService->addPaiementToDette($detteId, $data);
+
+            return [
+                'statut' => 'Success',
+                'data' => $paiementDetails,
+                'message' => 'Paiement ajouté avec succès.',
+                'httpStatus' => 200
+            ];
+        } catch (\Exception $e) {
+            return [
+                'statut' => 'Echec',
+                'message' => 'Erreur lors de l\'ajout du paiement : ' . $e->getMessage(),
+                'httpStatus' => 500
+            ];
+        }
+    }
 
 }

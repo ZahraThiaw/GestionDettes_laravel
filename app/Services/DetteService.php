@@ -96,4 +96,64 @@ class DetteService implements DetteServiceInterface
     {
         return $this->detteRepository->getAllDettes();
     }
+
+    public function getDetteById(int $id)
+    {
+        return $this->detteRepository->getDetteById($id);
+    }
+
+    public function getArticlesByDetteId(int $detteId)
+    {
+        return $this->detteRepository->getArticlesByDetteId($detteId);
+    }
+
+    public function getPaiementsByDetteId(int $detteId)
+    {
+        return $this->detteRepository->getPaiementsByDetteId($detteId);
+    }
+
+    public function addPaiementToDette(int $detteId, array $paiementData)
+    {
+        DB::beginTransaction();
+
+        try {
+            // Récupérer la dette
+            $dette = $this->detteRepository->getDetteById($detteId);
+
+            if (!$dette) {
+                throw new ServiceException("Dette not found.");
+            }
+
+            // Calculer le montant total des paiements effectués
+            $montantRestant = $dette->montant - $dette->paiements->sum('montant');
+
+            // Vérifier que le paiement ne dépasse pas le montant restant
+            if ($paiementData['montant'] > $montantRestant) {
+                throw new ServiceException("Le montant du paiement dépasse le montant restant.");
+            }
+
+            // Ajouter la date actuelle aux données du paiement
+            $paiementData['date'] = now(); // Utilise la fonction now() pour obtenir la date actuelle
+
+            // Ajouter le paiement à la dette
+            $this->detteRepository->createPaiementForDette($detteId, $paiementData);
+
+            DB::commit();
+
+            // Récupérer les paiements mis à jour
+            $dette = $this->detteRepository->getDetteById($detteId);
+
+            return [
+                'id' => $dette->id,
+                'date' => $dette->date,
+                'montant' => $dette->montant,
+                'paiements' => $dette->paiements
+            ];
+        } catch (ServiceException $e) {
+            DB::rollBack();
+            throw new ServiceException("Erreur lors de l'ajout du paiement : " . $e->getMessage());
+        }
+    }
+
+
 }

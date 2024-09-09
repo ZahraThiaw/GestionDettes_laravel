@@ -12,4 +12,9 @@ interface DetteRepositoryInterface
     public function createPaiement(array $data);
     public function getAllDettes();
     public function getDettesByStatus(string $statut);
+
+    public function getDetteById(int $id);
+    public function getArticlesByDetteId(int $detteId);
+    public function getPaiementsByDetteId(int $detteId);
+    public function createPaiementForDette(int $detteId, array $paiementData);
 }

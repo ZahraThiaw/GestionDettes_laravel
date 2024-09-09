@@ -93,6 +93,10 @@ Route::prefix('v1')->group(function () {
 
             Route::post('dettes', [DetteController::class, 'store']);
             Route::get('dettes', [DetteController::class, 'index']);
+            Route::get('/dettes/{id}', [DetteController::class, 'show']);
+            Route::get('/dettes/{id}/articles', [DetteController::class, 'listArticles']);
+            Route::get('/dettes/{id}/paiements', [DetteController::class, 'listPaiements']);
+            Route::post('/dettes/{id}/paiements', [DetteController::class, 'addPaiement']);
         });
 
         // Routes accessibles uniquement par les Admins
