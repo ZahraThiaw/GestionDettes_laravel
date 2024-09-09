@@ -1,0 +1,1593 @@
+info:
+  title: Coronatime API
+  description: Here goes description
+  version: 0.1.9
+
+servers:
+  - url: http://localhost:3000/wane/v1
+    description: local server
+  - url: http://producation.app/api
+    description: production server
+
+openapi: 3.0.0
+
+paths:
+  /login:
+    post:
+      summary: User login
+      description: Authenticates a user and returns a JWT token upon successful login.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Successful login, returns a JWT token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '403':
+          description: Unauthorized login attempt.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: Echec
+                  message:
+                    type: string
+                    example: Unauthorized
+                  httpStatus:
+                    type: integer
+                    example: 403
+
+  /logout:
+    post:
+      summary: User logout
+      description: Logs out an authenticated user and invalidates their JWT token.
+      tags:
+        - Authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully logged out.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: Success
+                  message:
+                    type: string
+                    example: Successfully logged out
+                  httpStatus:
+                    type: integer
+                    example: 200
+
+  /users:
+    post:
+      summary: Create a new user
+      description: Creates a new user in the system, only accessible to admin users.
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nom:
+                  type: string
+                  example: John 
+                prenom:
+                  type: string
+                  example: John Doe
+                login:
+                  type: string
+                  example: johndoe@example.com
+                password:
+                  type: string
+                  example: password123
+                password_confirmation:
+                  type: string
+                  example: password123
+                role_id:
+                  type: integer
+                  example: 1
+                photo:
+                  type: string
+                  example: https://res.cloudinary.com/ddxlmn8vh/image/upload/v1725616746/douasjuzt04n4c4cit2e.jpg
+                active:
+                  type: boolean
+                  example: true
+              required:
+                - nom
+                - prenom
+                - login
+                - password
+                - password_confirmation
+                - role_id
+                - photo
+                - active
+      responses:
+        '201':
+          description: User successfully created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      nom:
+                        type: string
+                        example: John 
+                      prenom:
+                        type: string
+                        example: John Doe
+                      login:
+                        type: string
+                        example: johndoe@example.com
+                      password:
+                        type: string
+                        example: password123
+                      password_confirmation:
+                        type: string
+                        example: password123
+                      role_id:
+                        type: integer
+                        example: 1
+                      photo:
+                        type: string
+                        example: https://res.cloudinary.com/ddxlmn8vh/image/upload/v1725616746/douasjuzt04n4c4cit2e.jpg
+                      active:
+                        type: boolean
+                        example: true
+                  message:
+                    type: string
+                    example: Utilisateur créé avec succès.
+                  httpStatus:
+                    type: integer
+                    example: 201
+        '500':
+          description: Error creating user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Erreur lors de la création de l'utilisateur
+                  httpStatus:
+                    type: integer
+                    example: 500
+    get:
+      summary: List users
+      description: Retrieves a list of users, with optional filters for role and active status.
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: role
+          schema:
+            type: string
+          description: Filter users by role name.
+          example: Admin
+        - in: query
+          name: active
+          schema:
+            type: string
+            enum: ['true', 'false']
+          description: Filter users by active status ('oui' for active, 'non' for inactive).
+      responses:
+        '200':
+          description: List of users retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: success
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: John Doe
+                        email:
+                          type: string
+                          example: johndoe@example.com
+                        role_id:
+                          type: integer
+                          example: 1
+                        active:
+                          type: boolean
+                          example: true
+                  message:
+                    type: string
+                    example: Liste des utilisateurs récupérée avec succès.
+                  httpStatus:
+                    type: integer
+                    example: 200
+        '400':
+          description: No users found or invalid role specified.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Aucun utilisateur trouvé ou le rôle spécifié est invalide.
+                  httpStatus:
+                    type: integer
+                    example: 400
+
+  /articles:
+    get:
+      tags:
+        - Articles
+      security:
+        - bearerAuth: []
+      summary: "Récupère la liste des articles disponibles"
+      operationId: "getArticles"
+      parameters:
+        - in: query
+          name: disponible
+          schema:
+            type: string
+            enum: [oui, non]
+          description: Filtrer les articles par disponibilité.
+      responses:
+        200:
+          description: "Liste des articles récupérée avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        libelle:
+                          type: string
+                        prix:
+                          type: number
+                          format: float
+                        qteStock:
+                          type: integer
+                  message:
+                    type: string
+                    example: "Liste des articles récupérée avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Aucun article trouvé."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Aucun article trouvé."
+                  httpStatus:
+                    type: integer
+                    example: 404
+    post:
+      tags:
+        - Articles
+      security:
+        - bearerAuth: []
+      summary: "Créer un nouvel article"
+      operationId: "createArticle"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                libelle:
+                  type: string
+                  example: "Article A"
+                prix:
+                  type: number
+                  format: float
+                  example: 1500.00
+                qteStock:
+                  type: integer
+                  example: 10
+      responses:
+        200:
+          description: "Article créé avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      libelle:
+                        type: string
+                      prix:
+                        type: number
+                      qteStock:
+                        type: integer
+                  message:
+                    type: string
+                    example: "Article créé avec succès"
+                  httpStatus:
+                    type: integer
+                    example: 200
+
+  /articles/{id}:
+    get:
+      tags:
+        - Articles
+      security:
+        - bearerAuth: []
+      summary: "Récupère les détails d'un article par son ID"
+      operationId: "getArticleById"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de l'article
+      responses:
+        200:
+          description: "Article récupéré avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      libelle:
+                        type: string
+                      prix:
+                        type: number
+                      qteStock:
+                        type: integer
+                  message:
+                    type: string
+                    example: "Article récupéré avec succès"
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Article non trouvé"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Article non trouvé"
+                  httpStatus:
+                    type: integer
+                    example: 404
+    patch:
+      tags:
+        - Articles
+      security:
+        - bearerAuth: []
+      summary: "Mise à jour partielle d'un article"
+      description: "Met à jour partiellement un article existant en fonction de son ID."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: "ID de l'article à mettre à jour"
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                libelle:
+                  type: string
+                  example: "Nom de l'article modifié"
+                prix:
+                  type: number
+                  format: float
+                  example: 29.99
+                qteStock:
+                  type: integer
+                  example: 100
+              required:
+                - libelle
+                - prix
+                - qteStock
+      responses:
+        200:
+          description: "Article mis à jour avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      libelle:
+                        type: string
+                        example: "Nom de l'article mis à jour"
+                      prix:
+                        type: number
+                        format: float
+                        example: 29.99
+                      qteStock:
+                        type: integer
+                        example: 100
+                  message:
+                    type: string
+                    example: "Article mis à jour avec succès"
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Article non trouvé"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Article non trouvé"
+                  httpStatus:
+                    type: integer
+                    example: 404
+        400:
+          description: "Requête invalide"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Requête invalide"
+                  httpStatus:
+                    type: integer
+                    example: 400
+    put:
+      tags:
+        - Articles
+      security:
+        - bearerAuth: []
+      summary: "Met à jour les détails d'un article par son ID"
+      operationId: "updateArticle"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de l'article
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                libelle:
+                  type: string
+                  example: "Article B"
+                prix:
+                  type: number
+                  format: float
+                  example: 1800.00
+                qteStock:
+                  type: integer
+                  example: 20
+      responses:
+        200:
+          description: "Article mis à jour avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      libelle:
+                        type: string
+                      prix:
+                        type: number
+                      qteStock:
+                        type: integer
+                  message:
+                    type: string
+                    example: "Article mis à jour avec succès"
+                  httpStatus:
+                    type: integer
+                    example: 200
+    delete:
+      tags:
+        - Articles
+      security:
+        - bearerAuth: []
+      summary: "Supprime un article par son ID (soft delete)"
+      operationId: "deleteArticle"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de l'article
+      responses:
+        200:
+          description: "Article supprimé avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  message:
+                    type: string
+                    example: "Article supprimé avec succès"
+                  httpStatus:
+                    type: integer
+                    example: 200
+
+  # /articles/restore/{id}:
+  #   post:
+  #     tags:
+  #       - Articles
+  #     security:
+  #       - bearerAuth: []
+  #     summary: "Restaure un article supprimé par son ID"
+  #     operationId: "restoreArticle"
+  #     parameters:
+  #       - name: id
+  #         in: path
+  #         required: true
+  #         schema:
+  #           type: integer
+  #         description: ID de l'article
+  #     responses:
+  #       200:
+  #         description: "Article restauré avec succès"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 statut:
+  #                   type: string
+  #                   example: "Success"
+  #                 message:
+  #                   type: string
+  #                   example: "Article restauré avec succès"
+  #                 httpStatus:
+  #                   type: integer
+  #                   example: 200
+
+  /articles/stock:
+    post:
+      tags:
+        - Articles
+      security:
+        - bearerAuth: []
+      summary: "Mise à jour du stock d'articles"
+      description: "Met à jour les quantités en stock pour plusieurs articles."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: "ID de l'article"
+                    example: 1
+                  qteStock:
+                    type: integer
+                    description: "Nouvelle quantité en stock"
+                    example: 50
+              required:
+                - id
+                - qteStock
+      responses:
+        200:
+          description: "Mise à jour du stock effectuée avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        libelle:
+                          type: string
+                          example: "Nom de l'article"
+                        prix:
+                          type: number
+                          format: float
+                          example: 25.99
+                        qteStock:
+                          type: integer
+                          example: 50
+                  message:
+                    type: string
+                    example: "Mise à jour du stock effectuée avec succès"
+                  httpStatus:
+                    type: integer
+                    example: 200
+        400:
+          description: "Requête invalide"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Données invalides pour la mise à jour du stock"
+                  httpStatus:
+                    type: integer
+                    example: 400
+
+  /articles/libelle:
+    post:
+      tags:
+        - Articles
+      security:
+        - bearerAuth: []
+      summary: "Filtrer les articles par libellé"
+      description: "Filtre et récupère les articles correspondant au libellé fourni."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                libelle:
+                  type: string
+                  description: "Libellé de l'article à rechercher"
+                  example: "Chaise"
+              required:
+                - libelle
+      responses:
+        200:
+          description: "Article récupéré avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        libelle:
+                          type: string
+                          example: "Chaise"
+                        prix:
+                          type: number
+                          format: float
+                          example: 29.99
+                        qteStock:
+                          type: integer
+                          example: 100
+                  message:
+                    type: string
+                    example: "Article récupéré avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Aucun article trouvé avec ce libellé"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Aucun article trouvé avec ce libellé"
+                  httpStatus:
+                    type: integer
+                    example: 404
+
+  /clients:
+    get:
+      tags:
+        - Clients
+      security:
+        - bearerAuth: []
+      summary: Récupérer la liste des clients
+      responses:
+        '200':
+          description: Liste des clients récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        surnom:
+                          type: string
+                        telephone:
+                          type: string
+                        adresse:
+                          type: string
+                        active:
+                          type: boolean
+                  message:
+                    type: string
+                  httpStatus:
+                    type: integer
+        '404':
+          description: Aucun client trouvé
+    post:
+      tags:
+        - Clients
+      security:
+        - bearerAuth: []
+      summary: Créer un nouveau client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                surnom:
+                  type: string
+                telephone:
+                  type: string
+                adresse:
+                  type: string
+                user:
+                  type: object
+                  properties:
+                    login:
+                      type: string
+                    password:
+                      type: string
+      responses:
+        '200':
+          description: Client enregistré avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      client:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          surnom:
+                            type: string
+                          telephone:
+                            type: string
+                          adresse:
+                            type: string
+                  message:
+                    type: string
+                  httpStatus:
+                    type: integer
+        '500':
+          description: Erreur lors de l'enregistrement
+
+  /clients/{id}:
+    get:
+      tags:
+        - Clients
+      security:
+        - bearerAuth: []
+      summary: Récupérer un client par son ID
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Client récupéré avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      surnom:
+                        type: string
+                      telephone:
+                        type: string
+                      adresse:
+                        type: string
+                  message:
+                    type: string
+                  httpStatus:
+                    type: integer
+        '404':
+          description: Client non trouvé
+    put:
+      tags:
+        - Clients
+      security:
+        - bearerAuth: []
+      summary: Mettre à jour un client
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                surnom:
+                  type: string
+                telephone:
+                  type: string
+                adresse:
+                  type: string
+      responses:
+        '200':
+          description: Client mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      surnom:
+                        type: string
+                      telephone:
+                        type: string
+                      adresse:
+                        type: string
+                  message:
+                    type: string
+                  httpStatus:
+                    type: integer
+        '500':
+          description: Erreur lors de la mise à jour
+    patch:
+      tags:
+        - Clients
+      security:
+        - bearerAuth: []
+      summary: "Mettre à jour un client"
+      description: "Cette route met à jour les informations d'un client spécifique."
+      operationId: "updateClient"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: "Identifiant du client à mettre à jour"
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                surnom:
+                  type: string
+                  example: "Jean Dupont"
+                  description: "Le surnom du client"
+                telephone:
+                  type: string
+                  example: "+33612345678"
+                  description: "Le numéro de téléphone du client"
+                adresse:
+                  type: string
+                  example: "12 rue de Paris, 75000 Paris"
+                  description: "L'adresse du client"
+              required:
+                - surnom
+                - telephone
+      responses:
+        200:
+          description: "Client mis à jour avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                    description: "Le statut de la réponse"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      surnom:
+                        type: string
+                        example: "Jean Dupont"
+                      telephone:
+                        type: string
+                        example: "+33612345678"
+                      adresse:
+                        type: string
+                        example: "12 rue de Paris, 75000 Paris"
+                    description: "Les informations du client mis à jour"
+                  message:
+                    type: string
+                    example: "Client mis à jour avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        400:
+          description: "Mauvaise requête - Données invalides"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Données invalides."
+                  httpStatus:
+                    type: integer
+                    example: 400
+        404:
+          description: "Client non trouvé"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Client non trouvé."
+                  httpStatus:
+                    type: integer
+                    example: 404
+        500:
+          description: "Erreur serveur"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la mise à jour du client."
+                  httpStatus:
+                    type: integer
+                    example: 500
+    delete:
+      tags:
+        - Clients
+      security:
+        - bearerAuth: []
+      summary: Supprimer un client
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Client supprimé avec succès
+        '500':
+          description: Erreur lors de la suppression
+
+  /clients/telephone:
+    post:
+      tags:
+        - Clients
+      security:
+        - bearerAuth: []
+      summary: Filtrer un client par téléphone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                telephone:
+                  type: string
+      responses:
+        '200':
+          description: Client trouvé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      surnom:
+                        type: string
+                      telephone:
+                        type: string
+                      adresse:
+                        type: string
+                  message:
+                    type: string
+                  httpStatus:
+                    type: integer
+        '404':
+          description: Client non trouvé
+
+  /clients/{clientId}/register:
+    post:
+      tags:
+        - Clients
+      security:
+        - bearerAuth: []
+      summary: Enregistrer un compte utilisateur pour un client existant
+      parameters:
+        - in: path
+          name: clientId
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Compte utilisateur créé avec succès pour le client
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      client:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          surnom:
+                            type: string
+                          telephone:
+                            type: string
+                  message:
+                    type: string
+                  httpStatus:
+                    type: integer
+        '500':
+          description: Erreur lors de la création du compte
+
+  /clients/{id}/user:
+    post:
+      tags:
+        - Clients
+      security:
+        - bearerAuth: []
+      summary: Récupérer un client avec utilisateur
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Client et utilisateur récupérés avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      client:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          surnom:
+                            type: string
+                      user:
+                        type: object
+                        properties:
+                          login:
+                            type: string
+                          email:
+                            type: string
+                  message:
+                    type: string
+                  httpStatus:
+                    type: integer
+        '404':
+          description: Client ou utilisateur non trouvé
+
+  /clients/{id}/dettes:
+    post:
+      tags:
+        - Clients
+      security:
+        - bearerAuth: []
+      summary: "Obtenir les dettes d'un client"
+      description: "Cette route permet d'obtenir les dettes associées à un client spécifique."
+      operationId: "getClientDettes"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: "Identifiant du client"
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: "Dettes du client récupérées avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: object
+                    properties:
+                      client:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          surnom:
+                            type: string
+                            example: "Jean Dupont"
+                          telephone:
+                            type: string
+                            example: "+33612345678"
+                          adresse:
+                            type: string
+                            example: "12 rue de Paris, 75000 Paris"
+                      dettes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            montant_total:
+                              type: number
+                              example: 200.5
+                            montant_verse:
+                              type: number
+                              example: 50.0
+                  message:
+                    type: string
+                    example: "Client trouvé."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Client non trouvé"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Client non trouvé."
+                  httpStatus:
+                    type: integer
+                    example: 404
+        500:
+          description: "Erreur serveur"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la récupération des dettes."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+  /dettes:
+    post:
+      tags:
+        - Dettes
+      security:
+        - bearerAuth: []
+      summary: "Enregistrer une nouvelle dette"
+      description: "Cette route permet d'enregistrer une nouvelle dette avec ses détails."
+      operationId: "createDette"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_id:
+                  type: integer
+                  example: 1
+                  description: "ID du client"
+                montant_total:
+                  type: number
+                  format: float
+                  example: 200.5
+                  description: "Le montant total de la dette"
+                montant_verse:
+                  type: number
+                  format: float
+                  example: 50.0
+                  description: "Le montant versé pour la dette"
+                articles:
+                  type: array
+                  description: "Liste des articles associés à la dette"
+                  items:
+                    type: object
+                    properties:
+                      article_id:
+                        type: integer
+                        example: 1
+                      quantity:
+                        type: integer
+                        example: 3
+              required:
+                - client_id
+                - montant_total
+                - montant_verse
+                - articles
+      responses:
+        201:
+          description: "Dette enregistrée avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      client_id:
+                        type: integer
+                        example: 1
+                      montant_total:
+                        type: number
+                        example: 200.5
+                      montant_verse:
+                        type: number
+                        example: 50.0
+                    description: "Les détails de la dette enregistrée"
+                  message:
+                    type: string
+                    example: "Dette enregistrée avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 201
+        411:
+          description: "Erreur lors de l'enregistrement de la dette"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Dette non enregistrée."
+                  httpStatus:
+                    type: integer
+                    example: 411
+        500:
+          description: "Erreur serveur"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur interne."
+                  httpStatus:
+                    type: integer
+                    example: 500
+    get:
+      tags:
+        - Dettes
+      security:
+        - bearerAuth: []
+      summary: "Lister toutes les dettes"
+      description: "Cette route permet de lister toutes les dettes ou de filtrer par statut."
+      operationId: "listDettes"
+      parameters:
+        - name: statut
+          in: query
+          required: false
+          description: "Statut des dettes à filtrer"
+          schema:
+            type: string
+            example: "non payée"
+      responses:
+        200:
+          description: "Dettes récupérées avec succès"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    description: "Liste des dettes"
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        client_id:
+                          type: integer
+                          example: 1
+                        montant_total:
+                          type: number
+                          example: 200.5
+                        montant_verse:
+                          type: number
+                          example: 50.0
+                  message:
+                    type: string
+                    example: "Dettes récupérées avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Aucune dette trouvée"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  message:
+                    type: string
+                    example: "Aucune dette trouvée."
+                  httpStatus:
+                    type: integer
+                    example: 404
+        500:
+          description: "Erreur serveur"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la récupération des dettes."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -99,56 +99,38 @@ class UserController extends Controller
     // }
 
     public function store(UserRequest $request)
-{
-    // Démarrer une transaction pour garantir l'intégrité des données
-    DB::beginTransaction();
+    {
+        // Démarrer une transaction pour garantir l'intégrité des données
+        DB::beginTransaction();
 
-    try {
-        // Obtenir les données validées de la requête
-        $data = $request->validated();
+        try {
+            // Obtenir les données validées de la requête
+            $data = $request->validated();
 
-        // // Gérer le téléchargement de la photo
-        // if ($request->hasFile('photo')) {
-        //     // Lire le fichier photo
-        //     $photo = $request->file('photo');
-            
-        //     // // Convertir le fichier photo en base64
-        //     // $photoData = file_get_contents($photo->getRealPath());
-        //     // $base64Photo = base64_encode($photoData);
+            // Créer l'utilisateur avec les données validées, y compris le role_id
+            $user = User::create($data);
 
-        //     // // Préfixer les données base64 pour indiquer le type d'image
-        //     // $data['photo'] = 'data:image/' . $photo->getClientOriginalExtension() . ';base64,' . $base64Photo;
-        // }
+            // Confirmer la transaction
+            DB::commit();
 
-        // Créer l'utilisateur avec les données validées, y compris le role_id
-        $user = User::create($data);
+            return [
+                'statut' => 'success',
+                'data' => $user,
+                'message' => 'Utilisateur créé avec succès.',
+                'httpStatus' => 201
+            ];
 
-        // if (request()->hasFile('photo')) {
-        //     $file = request()->file('photo');
-        //     // Sauvegarder le fichier temporairement
-        //     $tempPath = $file->store('temp');
-        //     StoreImageInCloud::dispatch($user, $tempPath);
-        // }
+        } catch (\Exception $e) {
+            // Annuler la transaction en cas d'erreur
+            DB::rollBack();
 
-        // Confirmer la transaction
-        DB::commit();
-
-        return response()->json([
-            'statut' => 'success',
-            'data' => $user,
-            'message' => 'Utilisateur créé avec succès.'
-        ], 201);
-
-    } catch (\Exception $e) {
-        // Annuler la transaction en cas d'erreur
-        DB::rollBack();
-
-        return response()->json([
-            'statut' => 'error',
-            'message' => 'Erreur lors de la création de l\'utilisateur: ' . $e->getMessage()
-        ], 500);
+            return [
+                'statut' => 'error',
+                'message' => 'Erreur lors de la création de l\'utilisateur: ' . $e->getMessage(),
+                'httpStatus' => 500
+            ];
+        }
     }
-}
 
 
      /**
@@ -224,11 +206,12 @@ class UserController extends Controller
                 $query->where('role_id', $role->id);
             } else {
                 // Retourner une erreur si le rôle n'existe pas
-                return response()->json([
+                return [
                     'statut' => 'error',
                     'data' => null,
                     'message' => 'Le rôle spécifié est invalide.',
-                ], 400);
+                    'httpStatus' => 400
+                ];
             }
         }
 
@@ -244,19 +227,21 @@ class UserController extends Controller
 
         // Vérifier si des utilisateurs ont été trouvés
         if ($users->isEmpty()) {
-            return response()->json([
+            return [
                 'statut' => 'error',
                 'data' => null,
                 'message' => 'Aucun utilisateur trouvé',
-            ], 404);
+                'httpStatus' => 400
+            ];
         }
 
         // Retourner la réponse JSON avec les utilisateurs trouvés
-        return response()->json([
+        return [
             'statut' => 'success',
             'data' => $users,
             'message' => 'Liste des utilisateurs récupérée avec succès.',
-        ], 200);
+            'httpStatus' => 200
+        ];
     }
 
     

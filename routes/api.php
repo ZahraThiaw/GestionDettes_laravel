@@ -71,7 +71,7 @@ Route::prefix('v1')->group(function () {
         // Routes accessibles uniquement par les Admins
         Route::middleware('can:isBoutiquier')->group(function (){
             //Route::get('articles', [ArticleController::class, 'index']);
-            Route::get('articles', [ArticleController::class, 'findByDisponibilite']);
+            Route::get('articles', [ArticleController::class, 'index']);
             Route::post('articles', [ArticleController::class, 'store']);
             Route::patch('articles/{id}', [ArticleController::class, 'update']);
             Route::get('articles/{id}', [ArticleController::class, 'show']);
@@ -96,7 +96,7 @@ Route::prefix('v1')->group(function () {
         });
 
         // Routes accessibles uniquement par les Admins
-        Route::middleware('can:isClient,isBoutiquier')->group(function (){
+        Route::middleware('can:isBoutiquier,isClient')->group(function (){
             Route::get('clients/{id}', [ClientController::class, 'show']);
             Route::post('clients/{id}/user', [ClientController::class, 'showClientWithUser']);
 

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Events\ImageUploadEvent;
+use App\Exceptions\RepositoryException;
 use App\Mail\ClientLoyaltyCardMail;
 use App\Models\Client;
 use App\Models\Role;
@@ -100,7 +101,7 @@ class ClientRepository implements ClientRepositoryInterface
     
                 // Vérifier que le rôle existe
                 if (!$roleClient) {
-                    throw new \Exception('Le rôle "Client" n\'existe pas.');
+                    throw new RepositoryException('Le rôle "Client" n\'existe pas.');
                 }
     
                 $userData['role_id'] = $roleClient->id;
@@ -115,7 +116,7 @@ class ClientRepository implements ClientRepositoryInterface
             return [
                 'client' => $client->load('user'), // Charge l'utilisateur associé
             ];
-        } catch (\Exception $e) {
+        } catch (RepositoryException $e) {
             DB::rollBack();
             throw $e;
         }
@@ -143,11 +144,11 @@ class ClientRepository implements ClientRepositoryInterface
             $client = Client::findOrFail($clientId);
 
             if ($client->user) {
-                throw new \Exception('Ce client a déjà un compte utilisateur.');
+                throw new RepositoryException('Ce client a déjà un compte utilisateur.');
             }
 
             if (User::where('login', $userData['login'])->exists()) {
-                throw new \Exception('Le login existe déjà.');
+                throw new RepositoryException('Le login existe déjà.');
             }
 
             $roleClient = Role::where('name', 'Client')->firstOrFail();
@@ -167,7 +168,7 @@ class ClientRepository implements ClientRepositoryInterface
                 'httpStatus' => 201
             ];
 
-        } catch (\Exception $e) {
+        } catch (RepositoryException $e) {
             DB::rollBack();
             throw $e;
         }

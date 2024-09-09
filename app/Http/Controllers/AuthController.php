@@ -95,10 +95,14 @@ class AuthController extends Controller
         $token = $this->authService->authentificate($credentials);
 
         if ($token) {
-            return response()->json(['token' => $token]);
+            return ['token' => $token];
         }
 
-        return response()->json(['error' => 'Unauthorized'], 401);
+        return [
+            'statut' => 'Echec',
+            'message' => 'Unauthorized',
+            'httpStatus' => 403
+        ];  
     }
 
 
@@ -139,6 +143,10 @@ class AuthController extends Controller
     public function logout()
     {
         $this->authService->logout();
-        return response()->json(['message' => 'Successfully logged out']);
+        return [
+            'statut' => 'Success',
+            'message' => 'Successfully logged out',
+            'httpStatus' => 200
+        ];
     }
 }

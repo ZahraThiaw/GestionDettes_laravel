@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\ServiceException;
 use App\Repositories\DetteRepositoryInterface;
 use App\Models\Article;
 use App\Repositories\ArticleRepository;
@@ -26,7 +27,7 @@ class DetteService implements DetteServiceInterface
         try {
             // Validation des articles
             if (empty($data['articles']) || count($data['articles']) === 0) {
-                throw new Exception("Aucun article associé à la dette.");
+                throw new ServiceException("Aucun article associé à la dette.");
             }
 
             $montantTotal = 0;
@@ -36,7 +37,7 @@ class DetteService implements DetteServiceInterface
                 // Vérifier si l'article existe via le repository
                 $articleModel = $this->articleRepository->find($article['articleId']);
                 if (!$articleModel) {
-                    throw new Exception("L'article avec ID {$article['articleId']} n'existe pas.");
+                    throw new ServiceException("L'article avec ID {$article['articleId']} n'existe pas.");
                 }
 
                 // Calculer le montant total de la dette
@@ -68,7 +69,7 @@ class DetteService implements DetteServiceInterface
 
                 // Validation du montant du paiement
                 if ($montantPaiement > $montantTotal) {
-                    throw new Exception("Le montant du paiement dépasse le montant de la dette.");
+                    throw new ServiceException("Le montant du paiement dépasse le montant de la dette.");
                 }
 
                 // Enregistrer le paiement
@@ -80,9 +81,9 @@ class DetteService implements DetteServiceInterface
             }
 
             DB::commit();
-        } catch (Exception $e) {
+        } catch (ServiceException $e) {
             DB::rollBack();
-            throw new Exception("Erreur lors de l'enregistrement de la dette : " . $e->getMessage());
+            throw new ServiceException("Erreur lors de l'enregistrement de la dette : " . $e->getMessage());
         }
     }
 

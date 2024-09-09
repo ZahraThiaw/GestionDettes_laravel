@@ -36,7 +36,11 @@ class ArticleRepositoryImpl implements ArticleRepository
         if ($article) {
             $article->delete();
         }
+        else {
+            return null;
+        }
         return $article;
+
     }
 
     public function findByLibelle($libelle)
