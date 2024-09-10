@@ -14,6 +14,9 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('uploads:retry')->daily();
+
+        // Planifier la commande pour s'exécuter tous les vendredis à 14h
+        $schedule->command('sms:send-debt-summary')->fridays()->at('14:00');
     }
 
     /**
