@@ -12,13 +12,12 @@ class UserObserver
         // Vérifier si l'utilisateur a téléchargé une photo
         if (request()->hasFile('photo')) {
             $file = request()->file('photo');
-            // Sauvegarder le fichier temporairement
+            
+            // Sauvegarder le fichier temporairement dans le système de fichiers
             $tempPath = $file->store('temp');
-
+            
             // Émettre l'événement UserCreated avec l'utilisateur et le chemin de la photo
             event(new UserCreated($user, $tempPath));
-
-            //dd('ok');
         }
     }
 }
