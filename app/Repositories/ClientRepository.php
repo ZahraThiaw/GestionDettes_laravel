@@ -10,6 +10,7 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use App\Scopes\FilterByTelephoneScope;
+use App\Services\Contracts\ILoyaltyCardService;
 use App\Services\UploadService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Endroid\QrCode\QrCode;
@@ -135,44 +136,96 @@ class ClientRepository implements ClientRepositoryInterface
         $client->delete();
     }
 
+public function registerClientForExistingClient(array $userData, $clientId)
+{
+    DB::beginTransaction();
 
-    public function registerClientForExistingClient(array $userData, $clientId)
-    {
-        DB::beginTransaction();
+    try {
+        // Trouver le client
+        $client = Client::findOrFail($clientId);
 
-        try {
-            $client = Client::findOrFail($clientId);
-
-            if ($client->user) {
-                throw new RepositoryException('Ce client a déjà un compte utilisateur.');
-            }
-
-            if (User::where('login', $userData['login'])->exists()) {
-                throw new RepositoryException('Le login existe déjà.');
-            }
-
-            $roleClient = Role::where('name', 'Client')->firstOrFail();
-            $userData['role_id'] = $roleClient->id;
-
-            $user = User::create($userData);
-            $client->user()->associate($user);
-            $client->save();
-
-            DB::commit();
-            return [
-                'statut' => 'Success',
-                'data' => [
-                    'client' => $client,
-                ],
-                'message' => 'Compte utilisateur créé avec succès pour le client.',
-                'httpStatus' => 201
-            ];
-
-        } catch (RepositoryException $e) {
-            DB::rollBack();
-            throw $e;
+        // Vérifier si le client a déjà un compte utilisateur
+        if ($client->user) {
+            throw new RepositoryException('Ce client a déjà un compte utilisateur.');
         }
+
+        // Vérifier si le login existe déjà
+        if (User::where('login', $userData['login'])->exists()) {
+            throw new RepositoryException('Le login existe déjà.');
+        }
+
+        // Associer un rôle "Client" à l'utilisateur
+        $roleClient = Role::where('name', 'Client')->firstOrFail();
+        $userData['role_id'] = $roleClient->id;
+
+        // Créer l'utilisateur et associer au client
+        $user = User::create($userData);
+        $client->user()->associate($user);
+        $client->save();
+
+        // Générer la carte de fidélité (si nécessaire) et obtenir le chemin du PDF
+        $loyaltyCardService = app(ILoyaltyCardService::class);
+        $pdfPath = $loyaltyCardService->generateLoyaltyCard($client);
+
+        // Envoi de l'email avec la carte de fidélité en pièce jointe
+        Mail::to($client->user->email)->send(new ClientLoyaltyCardMail($client, $pdfPath));
+
+        DB::commit();
+
+        return [
+            'statut' => 'Success',
+            'data' => [
+                'client' => $client,
+            ],
+            'message' => 'Compte utilisateur créé avec succès pour le client, et email envoyé.',
+            'httpStatus' => 201
+        ];
+
+    } catch (RepositoryException $e) {
+        DB::rollBack();
+        throw $e;
     }
+}
+
+
+
+    // public function registerClientForExistingClient(array $userData, $clientId)
+    // {
+    //     DB::beginTransaction();
+
+    //     try {
+    //         $client = Client::findOrFail($clientId);
+
+    //         if ($client->user) {
+    //             throw new RepositoryException('Ce client a déjà un compte utilisateur.');
+    //         }
+
+    //         if (User::where('login', $userData['login'])->exists()) {
+    //             throw new RepositoryException('Le login existe déjà.');
+    //         }
+
+    //         $roleClient = Role::where('name', 'Client')->firstOrFail();
+    //         $userData['role_id'] = $roleClient->id;
+
+    //         $user = User::create($userData);
+    //         $client->user()->associate($user);
+    //         $client->save();
+
+    //         DB::commit();
+    //         return [
+    //             'statut' => 'Success',
+    //             'data' => [
+    //                 'client' => $client,
+    //             ],
+    //             'message' => 'Compte utilisateur créé avec succès pour le client.',
+    //             'httpStatus' => 201
+    //         ];
+
+    //     } catch (RepositoryException $e) {
+    //         DB::rollBack();
+    //         throw $e;
+    //     }
+    // }
 
 
     public function generateLoyaltyCard(Client $client)

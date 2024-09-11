@@ -17,6 +17,8 @@
         "laravel/passport": "^12.3",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
+        "mongodb/mongodb": "^1.11",
+        "pear/http_request2": "^2.6",
         "twilio/sdk": "^8.3",
         "zircote/swagger-php": "^4.10"
     },

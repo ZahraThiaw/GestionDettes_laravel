@@ -171,6 +171,7 @@ return [
         Laravel\Passport\PassportServiceProvider::class,
         App\Providers\AuthCustomServiceProvider::class,
         App\Providers\UploadServiceProvider::class,
+        App\Providers\SmsServiceProvider::class,
     ])->toArray(),
 
     /*

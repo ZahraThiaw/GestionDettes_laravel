@@ -3,120 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carte de fidélité</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <title>Carte De Fidélité</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
         body {
-            height: 100vh;
-            width: 100vw;
-            font-family: 'Roboto', sans-serif;
-            text-align: center;
-            background-color: #f1f1f1;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 80vh;
+            position: relative;
+            margin: 0;
         }
         .card {
-            width: 350px;
-            height: 520px;
-            background-color: #fff;
-            border-radius: 7px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            top: 25%;
+            left: 25%;
+            background-color: white;
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 95.6mm; /* Largeur standard de carte de crédit */
+            height: 80.98mm; /* Hauteur standard de carte de crédit */
             position: relative;
             overflow: hidden;
-            align-items: center;
         }
-        #pattern1 {
-            width: 160%;
-            height: 75%;
-            object-fit: cover;
-            position: relative;
-            top: -20%;
-            left: 17%;
+        .card-header {
+            color: #9932CC;
+            font-size: 30px; /* Réduction de la taille du texte */
+            margin-bottom: 8px;
         }
-        #pattern2 {
-            width: 100%;
-            height: 35%;
-            position: relative;
-            z-index: 17;
-            top: -8%;
-            object-fit: cover;
-        }
-        span {
-            font-size: 25px;
-            color: #be53fc;
-            font-weight: bolder;
-            position: absolute;
-            top: 7%;
-        }
-        .avatar {
-            width: 134px;
-            height: 134px;
+        .profile-image {
+            width: 80px; /* Taille réduite de l'image */
+            height: 80px;
             border-radius: 50%;
-            background-color: black;
-            overflow: hidden;
-            margin-bottom: 15px;
-            z-index: 19;
-            position: absolute;
-            top: 15%;
-            display: flex;
-            justify-content: center;
-        }
-        .avatar img {
-            width: 100%;
-            height: 100%;
             object-fit: cover;
+            margin: 0 auto 5px;
+        }
+        .client-name {
+            font-size: 25px; /* Réduction de la taille du texte */
+            font-weight: bold;
+            margin-bottom: 5px;
         }
         .qr-code {
-            width: 160px;
-            height: 160px;
-            position: absolute;
-            top: 75%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 20;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: white;
-            color: #fff;
-            font-size: 16px;
-            border-radius: 8px;
-            padding: 10px;
-            box-shadow: 0 0 25px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            width: 110px; /* Taille réduite du QR code */
+            height: 110px;
+            margin: 0 auto;
         }
-        .qr-code img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
+        .decoration {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            z-index: 0;
+        }
+        .decoration-1 {
+            background-color: rgba(153, 50, 204, 0.2);
+            top: 5px;
+            left: 5px;
+        }
+        .decoration-2 {
+            background-color: rgba(255, 165, 0, 0.2);
+            bottom: 5px;
+            right: 5px;
+        }
+        .decoration-3 {
+            background-color: rgba(255, 255, 255, 0.);
+            top: 5px;
+            right: 5px;
         }
     </style>
 </head>
 <body>
-    <!-- Carte de fidélité -->
     <div class="card">
-        <img id="pattern1" src="/assets/pattern-waves.svg" alt="Pattern waves background">
-        <img id="pattern2" src="/assets/flat-geometric-background_23-2148948420-removebg-preview 1.svg" alt="Geometric background">
-        <!-- Titre de la carte -->
-        <span>Carte De Fidélité</span>
-        <div class="avatar">
-            <img src="{{ $clientPhoto }}" alt="Profile photo of Seydina Mouhammad Diop">
-        </div>
-        <span style="top: 45%; font-size: 20px; font-weight: 600; color: #404040;">{{ $clientName }}</span></span>
-        <div class="qr-code">
-            <img src="{{ $qrCodePath }}" alt="QR Code">
-        </div>
+        <div class="decoration decoration-1"></div>
+        <div class="decoration decoration-2"></div>
+        <div class="decoration decoration-3"></div>
+        <h1 class="card-header">Carte De Fidélité</h1>
+        <img src="{{ $client->user->photo }}" alt="Photo de profil" class="profile-image">
+        <p class="client-name">{{ $client->user->prenom }} {{ $client->user->nom }}</p>
+        <img src="{{ $client->qrcode}}" alt="QR Code" class="qr-code">
     </div>
 </body>
 </html>

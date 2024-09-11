@@ -34,7 +34,7 @@ class SendDebtSummarySmsCommand extends Command
 
         // Parcourir chaque client et dispatcher un job pour chaque envoi de SMS
         foreach ($clients as $client) {
-            SendDebtSummarySmsJob::dispatch($client);
+            //SendDebtSummarySmsJob::dispatch($client);
         }
 
         $this->info('Les SMS ont été envoyés à tous les clients avec des dettes.');
