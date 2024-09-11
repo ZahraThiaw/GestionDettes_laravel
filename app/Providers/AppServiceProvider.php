@@ -24,6 +24,7 @@ use App\Services\Contracts\IUploadService;
 use App\Services\DebtArchivingService;
 use App\Services\DetteService;
 use App\Services\DetteServiceInterface;
+use App\Services\FirebaseArchivingService;
 use App\Services\LoyaltyCardService;
 use App\Services\QrCodeService;
 
@@ -39,6 +40,21 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ClientRepositoryInterface::class, ClientRepository::class);
         $this->app->bind(ClientServiceInterface::class, ClientService::class);
 
+        // Bind the correct archiving service based on the environment variable
+        $this->app->bind(IDebtArchivingService::class, function ($app) {
+            $service = env('ARCHIVE_SERVICE', 'firebase'); // Default to 'firebase'
+
+            if ($service === 'mongodb') {
+                return new DebtArchivingService();
+            } else if ($service === 'firebase') {
+                return new FirebaseArchivingService();
+            }
+        });
+
+        //$this->app->bind(IDebtArchivingService::class, DebtArchivingService::class);
+        //$this->app->bind(IDebtArchivingService::class, FirebaseArchivingService::class);
+
+        
         // Enregistrer ClientService avec un alias
         // $this->app->singleton('ClientService', function ($app) {
         //     return new ClientService(
@@ -63,7 +79,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Lier l'interface DetteService à son implémentation
         $this->app->bind(DetteServiceInterface::class, DetteService::class);
-        $this->app->bind(IDebtArchivingService::class, DebtArchivingService::class);
     }
 
     // public function boot()

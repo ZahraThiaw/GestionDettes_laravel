@@ -2,43 +2,34 @@
 
 namespace App\Console\Commands;
 
-use App\Services\Contracts\SmsServiceInterface;
-use App\Models\Dette; // Importer le modèle Dette
+use App\Services\SmsDette;
 use Illuminate\Console\Command;
 
 class SendDebtReminders extends Command
 {
     protected $signature = 'sms:send-debt-reminders';
     protected $description = 'Envoie des rappels de dettes par SMS à tous les clients ayant des dettes impayées';
-    protected $smsService;
+    protected $smsDette;
 
-    public function __construct(SmsServiceInterface $smsService)
+    public function __construct(SmsDette $smsDette)
     {
         parent::__construct();
-        $this->smsService = $smsService;
+        $this->smsDette = $smsDette;
     }
 
     public function handle()
     {
-        // Appeler le service pour envoyer les rappels de dettes
-        $dettes = Dette::with('paiements', 'client')->get();
-        
-        foreach ($dettes as $dette) {
-            $totalPaiements = $dette->paiements->sum('montant');
-            $montantRestant = $dette->montant - $totalPaiements;
+        // Envoyer les rappels de dettes et obtenir les informations des clients traités
+        $sentReminders = $this->smsDette->sendDebtReminders();
 
-            if ($montantRestant > 0) {
-                $clientPhoneNumber = $dette->client->telephone;
-                $clientName = $dette->client->surnom;
-
-                // Envoyer le SMS
-                $this->smsService->sendSmsToClient($clientPhoneNumber, $montantRestant, $clientName);
-
-                // Afficher dans la console les informations du client et de la dette
-                $this->info("Client: $clientName, Téléphone: $clientPhoneNumber, Montant Restant: $montantRestant FCFA");
+        // Afficher les informations des clients traités
+        if (!empty($sentReminders)) {
+            $this->info('Les rappels de dettes ont été envoyés aux clients suivants:');
+            foreach ($sentReminders as $reminder) {
+                $this->info("Client: {$reminder['client']}, Téléphone: {$reminder['telephone']}, Montant Restant: {$reminder['montant_restant']} FCFA");
             }
+        } else {
+            $this->info('Aucun rappel de dette n\'a été envoyé.');
         }
-
-        $this->info('Les rappels de dettes ont été envoyés.');
     }
 }

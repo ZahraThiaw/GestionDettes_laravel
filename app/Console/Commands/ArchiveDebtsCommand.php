@@ -2,20 +2,20 @@
 
 namespace App\Console\Commands;
 
-use App\Services\Contracts\IDebtArchivingService;
+use App\Services\ArchiveDette;
 use Illuminate\Console\Command;
 
 class ArchiveDebtsCommand extends Command
 {
     protected $signature = 'debts:archive';
-    protected $description = 'Archive settled debts in MongoDB';
+    protected $description = 'Archive settled debts';
 
-    private $archivingService;
+    private $archiveDette;
 
-    public function __construct(IDebtArchivingService $archivingService)
+    public function __construct(ArchiveDette $archiveDette)
     {
         parent::__construct();
-        $this->archivingService = $archivingService;
+        $this->archiveDette = $archiveDette;
     }
 
     public function handle()
@@ -23,7 +23,7 @@ class ArchiveDebtsCommand extends Command
         $this->info('Archiving settled debts...');
         
         try {
-            $this->archivingService->archiveSettledDebts();
+            $this->archiveDette->archiveSettledDebts();
             $this->info('Debts archived successfully.');
         } catch (\Exception $e) {
             $this->error('Error: ' . $e->getMessage());
