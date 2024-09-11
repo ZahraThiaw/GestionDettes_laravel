@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Contracts\IDebtArchivingService;
 use Illuminate\Console\Command;
-use App\Services\DebtArchivingService;
 
 class ArchiveDebtsCommand extends Command
 {
@@ -12,7 +12,7 @@ class ArchiveDebtsCommand extends Command
 
     private $archivingService;
 
-    public function __construct(DebtArchivingService $archivingService)
+    public function __construct(IDebtArchivingService $archivingService)
     {
         parent::__construct();
         $this->archivingService = $archivingService;

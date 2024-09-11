@@ -16,10 +16,12 @@ use App\Services\ArticleServiceImpl;
 use App\Services\ClientService;
 use App\Services\ClientServiceInterface;
 use App\Services\CloudinaryUploadService;
+use App\Services\Contracts\IDebtArchivingService;
 use App\Services\Contracts\ILoyaltyCardService;
 use App\Services\Contracts\IQrCodeService;
 // use App\Services\CloudUploadService;
 use App\Services\Contracts\IUploadService;
+use App\Services\DebtArchivingService;
 use App\Services\DetteService;
 use App\Services\DetteServiceInterface;
 use App\Services\LoyaltyCardService;
@@ -61,6 +63,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Lier l'interface DetteService à son implémentation
         $this->app->bind(DetteServiceInterface::class, DetteService::class);
+        $this->app->bind(IDebtArchivingService::class, DebtArchivingService::class);
     }
 
     // public function boot()

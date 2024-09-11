@@ -5,9 +5,10 @@ namespace App\Services;
 use App\Models\Dette;
 use MongoDB\Client as MongoClient;
 use App\Http\Resources\DetteResource;
+use App\Services\Contracts\IDebtArchivingService;
 use Carbon\Carbon;
 
-class DebtArchivingService
+class DebtArchivingService implements IDebtArchivingService
 {
     protected $mongoClient;
     protected $mongoDb;
