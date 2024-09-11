@@ -112,6 +112,13 @@ class ClientRepository implements ClientRepositoryInterface
                 $client->user()->associate($user);
                 $client->save();
             }
+            
+                // Générer la carte de fidélité (si nécessaire) et obtenir le chemin du PDF
+                $loyaltyCardService = app(ILoyaltyCardService::class);
+                $pdfPath = $loyaltyCardService->generateLoyaltyCard($client);
+
+                // Envoi de l'email avec la carte de fidélité en pièce jointe
+                Mail::to($client->user->email)->send(new ClientLoyaltyCardMail($client, $pdfPath));
     
             DB::commit();
             return [
