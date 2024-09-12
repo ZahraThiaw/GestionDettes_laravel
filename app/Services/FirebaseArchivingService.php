@@ -40,6 +40,7 @@ class FirebaseArchivingService implements IDebtArchivingService
         // Archive each settled debt in Firebase Realtime Database
         foreach ($settledDebts as $dette) {
             $this->archiveDebtInFirebase($dette);
+            $this->deleteLocalDebt($dette);
         }
     }
 
@@ -99,4 +100,156 @@ class FirebaseArchivingService implements IDebtArchivingService
         // Finally, delete the debt itself
         $dette->delete();
     }
+
+    public function getArchivedDebts()
+    {
+        // Récupérer toutes les archives depuis la racine 'archives'
+        $archives = $this->database->getReference('archives')->getValue();
+
+        if (empty($archives)) {
+            return ['error' => 'Aucune dette archivées trouvées.'];
+        }
+
+        $allDebts = [];
+
+        // Parcourir chaque collection de dettes archivées par date
+        foreach ($archives as $date => $debts) {
+            foreach ($debts as $debt) {
+                $allDebts[] = $debt; // Ajouter chaque dette à la liste
+            }
+        }
+
+        return $allDebts; // Retourner toutes les dettes archivées
+    }
+
+    public function getArchivedDebtsByClient($clientId)
+    {
+        // Récupérer toutes les archives
+        $archives = $this->database->getReference('archives')->getValue();
+
+        // Filtrer pour ne garder que les dettes du client spécifié
+        $clientDebts = [];
+        if ($archives) {
+            foreach ($archives as $date => $debts) {
+                foreach ($debts as $debt) {
+                    if (isset($debt['client']['id']) && $debt['client']['id'] == $clientId) {
+                        $clientDebts[] = $debt;
+                    }
+                }
+            }
+        }
+
+        if (empty($clientDebts)) {
+            return ['error' => 'Aucune dette trouvée pour ce client.'];
+        }
+
+        return $clientDebts;
+    }
+
+    public function getArchivedDebtById($debtId)
+    {
+        // Récupérer toutes les archives
+        $archives = $this->database->getReference('archives')->getValue();
+
+        // Chercher la dette par son ID
+        if ($archives) {
+            foreach ($archives as $date => $debts) {
+                foreach ($debts as $debt) {
+                    if (isset($debt['id']) && $debt['id'] == $debtId) {
+                        return $debt; // Retourner la dette trouvée
+                    }
+                }
+            }
+        }
+
+        return ['error' => 'Aucune dette trouvée avec cet ID.'];
+    }
+
+    //restaurer toutes les dettes archivées d'une date spécifique.
+    public function restoreArchivedDebtsByDate($date)
+    {
+        // Récupérer les dettes archivées à cette date
+        $debts = $this->database->getReference('archives/' . $date)->getValue();
+
+        if ($debts) {
+            foreach ($debts as $debt) {
+                $this->restoreDebt($debt); // Restaurer chaque dette dans la base de données locale
+            }
+            
+            // Supprimer les dettes archivées dans Firebase après restauration
+            $this->database->getReference('archives/' . $date)->remove();
+        }
+        
+        return ['error' => 'Aucune dette archivée trouvée à cette date.'];
+    }
+
+    // Restaurer une dette spécifique dans la base de données locale
+    public function restoreArchivedDebt($debtId)
+    {
+        // Récupérer toutes les archives
+        $archives = $this->database->getReference('archives')->getValue();
+
+        if ($archives) {
+            foreach ($archives as $date => $debts) {
+                foreach ($debts as $key => $debt) {
+                    if (isset($debt['id']) && $debt['id'] == $debtId) {
+                        $this->restoreDebt($debt); // Restaurer la dette
+                        // Supprimer la dette de Firebase après restauration
+                        $this->database->getReference('archives/' . $date . '/' . $key)->remove();
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    //Restaurer les dettes d'un client dans la base de données locale
+    public function restoreArchivedDebtsByClient($clientId)
+    {
+        // Récupérer toutes les archives
+        $archives = $this->database->getReference('archives')->getValue();
+
+        if ($archives) {
+            foreach ($archives as $date => $debts) {
+                foreach ($debts as $key => $debt) {
+                    if (isset($debt['client']['id']) && $debt['client']['id'] == $clientId) {
+                        $this->restoreDebt($debt); // Restaurer la dette
+                        // Supprimer la dette de Firebase après restauration
+                        $this->database->getReference('archives/' . $date . '/' . $key)->remove();
+                    }
+                }
+            }
+        }
+    }
+
+    // Restaurer une dette dans la base de données locale
+    protected function restoreDebt($debt)
+    {
+        // Création de la dette dans la base locale
+        $newDebt = new Dette();
+        $newDebt->id = $debt['id'];
+        $newDebt->date = $debt['date'];
+        $newDebt->montant = $debt['montant'];
+        $newDebt->client_id = $debt['client']['id'];
+        $newDebt->save();
+
+        // Restauration des articles associés
+        foreach ($debt['articles'] as $article) {
+            $newDebt->articles()->attach($article['articleId'], [
+                'qteVente' => $article['qteVente'],
+                'prixVente' => $article['prixVente'],
+            ]);
+        }
+
+        // Restauration des paiements associés
+        foreach ($debt['paiements'] as $paiement) {
+            $newDebt->paiements()->create([
+                'montant' => $paiement['montant'],
+                'date' => $paiement['date'],
+            ]);
+        }
+    }
+
 }

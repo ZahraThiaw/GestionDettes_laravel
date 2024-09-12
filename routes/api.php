@@ -3,6 +3,7 @@
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DebtController;
 use App\Http\Controllers\DetteController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -66,6 +67,13 @@ Route::prefix('v1')->group(function () {
         Route::middleware('can:isAdmin')->group(function (){
             Route::post('/users', [UserController::class, 'store']);
             Route::get('/users', [UserController::class, 'index']);
+
+            Route::get('dettes/archive', [DebtController::class, 'getArchivedDebts']);
+            Route::get('/archive/clients/{clientId}/dettes', [DebtController::class, 'getArchivedDebtsByClient']);
+            Route::get('archive/dettes/{debtId}', [DebtController::class, 'getArchivedDebtById']);
+            Route::get('restaure/{date}', [DebtController::class, 'restoreArchivedDebtsByDate']);
+            Route::get('restaure/dette/{debtId}', [DebtController::class, 'restoreArchivedDebt']);
+            Route::get('restaure/client/{clientId}', [DebtController::class, 'restoreArchivedDebtsByClient']);
         });
 
         // Routes accessibles uniquement par les Admins
@@ -97,6 +105,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/dettes/{id}/articles', [DetteController::class, 'listArticles']);
             Route::get('/dettes/{id}/paiements', [DetteController::class, 'listPaiements']);
             Route::post('/dettes/{id}/paiements', [DetteController::class, 'addPaiement']);
+
         });
 
         // Routes accessibles uniquement par les Admins

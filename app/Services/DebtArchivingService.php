@@ -98,4 +98,136 @@ class DebtArchivingService implements IDebtArchivingService
         // Finally, delete the debt itself
         $dette->delete();
     }
+
+    public function getArchivedDebts()
+    {
+        // Récupérer toutes les collections de la base MongoDB
+        $collections = $this->mongoDb->listCollections();
+
+        if (empty($collections)) {
+            return ['error' => 'Aucune collection d\'archives trouvée.'];
+        }
+
+        $allArchivedDebts = [];
+
+        // Parcourir chaque collection et récupérer les dettes archivées
+        foreach ($collections as $collection) {
+            $debts = $this->mongoDb->{$collection->getName()}->find()->toArray();
+            $allArchivedDebts = array_merge($allArchivedDebts, $debts);
+        }
+
+        if (empty($allArchivedDebts)) {
+            return ['error' => 'Aucune dette archivées trouvées.'];
+        }
+
+        return $allArchivedDebts; // Retourner toutes les dettes archivées
+    }
+
+    public function getArchivedDebtsByClient($clientId)
+    {
+        // Parcourir toutes les collections d'archives
+        $collections = $this->mongoDb->listCollections();
+        $clientArchivedDebts = [];
+
+        foreach ($collections as $collection) {
+            $debts = $this->mongoDb->{$collection->getName()}->find(['client.id' => $clientId])->toArray();
+            if (!empty($debts)) {
+                $clientArchivedDebts = array_merge($clientArchivedDebts, $debts);
+            }
+        }
+
+        if (empty($clientArchivedDebts)) {
+            return ['error' => 'Aucune dette trouvée pour ce client.'];
+        }
+
+        return $clientArchivedDebts;
+    }
+
+    public function getArchivedDebtById($debtId)
+    {
+        // Parcourir les collections pour trouver la dette par ID
+        $collections = $this->mongoDb->listCollections();
+
+        foreach ($collections as $collection) {
+            $debt = $this->mongoDb->{$collection->getName()}->findOne(['id' => $debtId]);
+            if ($debt) {
+                return $debt;
+            }
+        }
+
+        return ['error' => 'Aucune dette trouvée avec cet ID.'];
+    }
+
+    //restaurer toutes les dettes archivées d'une date spécifique.
+    public function restoreArchivedDebtsByDate($date)
+    {
+        $collectionName = $date;
+        $debts = $this->mongoDb->$collectionName->find()->toArray();
+
+        foreach ($debts as $debt) {
+            $this->restoreLocalDebt($debt);
+        }
+
+        // Supprimer la collection après restauration
+        $this->mongoDb->$collectionName->drop();
+    }
+
+    //restaurer une dette archivée ainsi que ses articles et paiements localement 
+    protected function restoreLocalDebt($archivedDebt)
+    {
+        // Restaure la dette dans la base locale
+        $dette = Dette::create([
+            'id' => $archivedDebt['id'],
+            'date' => $archivedDebt['date'],
+            'montant' => $archivedDebt['montant'],
+            'client_id' => $archivedDebt['client']['id'],
+        ]);
+
+        // Ajouter les articles à la dette
+        foreach ($archivedDebt['articles'] as $article) {
+            $dette->articles()->attach($article['articleId'], [
+                'qteVente' => $article['qteVente'],
+                'prixVente' => $article['prixVente'],
+            ]);
+        }
+
+        // Ajouter les paiements
+        foreach ($archivedDebt['paiements'] as $paiement) {
+            $dette->paiements()->create([
+                'montant' => $paiement['montant'],
+                'date' => $paiement['date'],
+            ]);
+        }
+    }
+
+    //restaurer une seule dette depuis MongoDB vers la base locale
+    public function restoreArchivedDebt($debtId)
+    {
+        $collections = $this->mongoDb->listCollections();
+
+        foreach ($collections as $collection) {
+            $debt = $this->mongoDb->{$collection->getName()}->findOne(['id' => $debtId]);
+
+            if ($debt) {
+                $this->restoreLocalDebt($debt);
+                $this->mongoDb->{$collection->getName()}->deleteOne(['id' => $debtId]); // Supprimer la dette dans MongoDB
+                return;
+            }
+        }
+    }
+
+    //restaurer toutes les dettes d'un client dans la base de données locale
+    public function restoreArchivedDebtsByClient($clientId)
+    {
+        $collections = $this->mongoDb->listCollections();
+
+        foreach ($collections as $collection) {
+            $debts = $this->mongoDb->{$collection->getName()}->find(['client.id' => $clientId])->toArray();
+
+            foreach ($debts as $debt) {
+                $this->restoreLocalDebt($debt);
+                $this->mongoDb->{$collection->getName()}->deleteOne(['id' => $debt['id']]);
+            }
+        }
+    }
 }

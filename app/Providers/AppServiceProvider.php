@@ -40,17 +40,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ClientRepositoryInterface::class, ClientRepository::class);
         $this->app->bind(ClientServiceInterface::class, ClientService::class);
 
-        // Bind the correct archiving service based on the environment variable
-        $this->app->bind(IDebtArchivingService::class, function ($app) {
-            $service = env('ARCHIVE_SERVICE', 'firebase'); // Default to 'firebase'
-            
-            if ($service === 'firebase') {
-                return new FirebaseArchivingService();
-            } else if ($service === 'mongodb') {
-                return new DebtArchivingService();
-            }
-        });        
-
         //$this->app->bind(IDebtArchivingService::class, DebtArchivingService::class);
         //$this->app->bind(IDebtArchivingService::class, FirebaseArchivingService::class);
 

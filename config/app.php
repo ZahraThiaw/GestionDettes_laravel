@@ -172,6 +172,7 @@ return [
         App\Providers\AuthCustomServiceProvider::class,
         App\Providers\UploadServiceProvider::class,
         App\Providers\SmsServiceProvider::class,
+        App\Providers\ArchiveDetteProvider::class,
     ])->toArray(),
 
     /*
