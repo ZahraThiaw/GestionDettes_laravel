@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Services;
 
 use Twilio\Rest\Client;
@@ -25,22 +24,39 @@ class TwilioSmsService implements SmsServiceInterface
 
     public function sendDebtReminderToClients()
     {
+        // Récupérer toutes les dettes avec leurs paiements et clients
         $dettes = Dette::with('paiements', 'client')->get();
 
+        // Regrouper les dettes par client
+        $clients = [];
         foreach ($dettes as $dette) {
             $totalPaiements = $dette->paiements->sum('montant');
             $montantRestant = $dette->montant - $totalPaiements;
 
             if ($montantRestant > 0) {
-                $clientPhoneNumber = $dette->client->telephone;
-                $clientName = $dette->client->surnom;
-
-                try {
-                    $this->sendSmsToClient($clientPhoneNumber, $montantRestant, $clientName);
-                } catch (Exception $e) {
-                    // Log the error if sending the SMS fails
-                    Log::error("Erreur lors de l'envoi du SMS au client $clientName ($clientPhoneNumber) : " . $e->getMessage());
+                $clientId = $dette->client->id;
+                if (!isset($clients[$clientId])) {
+                    $clients[$clientId] = [
+                        'client' => $dette->client,
+                        'montantRestant' => 0,
+                    ];
                 }
+                $clients[$clientId]['montantRestant'] += $montantRestant;
+            }
+        }
+
+        // Envoyer un SMS par client avec le montant total restant
+        foreach ($clients as $clientId => $clientData) {
+            $client = $clientData['client'];
+            $montantRestant = $clientData['montantRestant'];
+            $clientPhoneNumber = $client->telephone;
+            $clientName = $client->surnom;
+
+            try {
+                $this->sendSmsToClient($clientPhoneNumber, $montantRestant, $clientName);
+            } catch (Exception $e) {
+                // Log the error if sending the SMS fails
+                Log::error("Erreur lors de l'envoi du SMS au client $clientName ($clientPhoneNumber) : " . $e->getMessage());
             }
         }
     }

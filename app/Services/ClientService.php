@@ -39,10 +39,11 @@ class ClientService implements ClientServiceInterface
         return $this->clientRepository->findByTelephone($telephones);
     }
 
-    public function createClient($id)
+    public function createClient($data)
     {
-        $this->clientRepository->create($id);
+        return $this->clientRepository->create($data);
     }
+
     public function updateClient($id, $data)
     {
         $client = $this->clientRepository->update($id, $data['client']);

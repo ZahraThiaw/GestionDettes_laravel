@@ -36,9 +36,18 @@ class DetteController extends Controller
             $this->detteService->createDetteWithDetails($data); 
 
             $dette = Dette::latest()->first(); // Assurez-vous d'utiliser la méthode appropriée pour récupérer la dette enregistrée
+            $response = [
+                'id' => $dette->id,
+                'date' => $dette->date,
+                'montant' => $dette->montant,
+                'client' => $dette->client->id,
+                'articles' => ArticleDetteResource::collection($dette->articles), // Inclure uniquement les articles
+                'paiements' => PaiementResource::collection($dette->paiements)
+            ];
+
             return [
                 'statut' => 'Success',
-                'data' => new DetteResource($dette),
+                'data' => $response,
                 'message' => 'Dette enregistrée avec succès.',
                 'httpStatus' => 201
             ];

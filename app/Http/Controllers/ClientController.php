@@ -8,6 +8,7 @@ use App\Models\Client;
 use App\Models\User;
 //use App\Traits\Response;
 use App\Enums\StatutResponse;
+use App\Events\UserCreated;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\ClientResource;
 use App\Http\Resources\UserResource;
@@ -18,7 +19,9 @@ use Illuminate\Http\Request;
 use App\Mail\ClientLoyaltyCardMail;
 use App\Rules\Telephone;
 use App\Services\ClientServiceInterface;
+use App\Services\Contracts\ILoyaltyCardService;
 use Illuminate\Support\Facades\DB; // Importer la façade DB pour les transactions
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class ClientController extends Controller
@@ -132,24 +135,142 @@ class ClientController extends Controller
         }
     }
 
-public function store(StoreRequest $request)
+// public function store(StoreRequest $request)
+// {
+//     try {
+//         // Valider les données client et utilisateur grâce à StoreRequest
+//         $validatedData = $request->validated();
+
+//         // Extraire les données du client
+//         $clientData = [
+//             'surnom' => $validatedData['surnom'],
+//             'telephone' => $validatedData['telephone'],
+//             'adresse' => $validatedData['adresse'] ?? null,
+//         ];
+
+//         // Extraire les données utilisateur si elles existent
+//         $userData = $validatedData['user'] ?? null;
+
+//         // Vérifier si le login utilisateur existe déjà si des données utilisateur sont fournies
+//         if ($userData && User::where('login', $userData['login'])->exists()) {
+//             return [
+//                 'statut' => 'Echec',
+//                 'data' => [],
+//                 'message' => 'Le nom d\'utilisateur est déjà pris.',
+//                 'httpStatus' => 409
+//             ];
+//         }
+
+//         $client = $this->clientService->createClient([
+//             'client' => $clientData,
+//             'user' => $userData
+//         ]);
+
+//         // Préparer les données à retourner
+//         $responseData = [
+//             'client' => $client,
+//         ];
+
+//         // Retourner la réponse avec succès
+//         return [
+//             'statut' => 'Success',
+//             'data' => $responseData,
+//             'message' => 'Client enregistré avec succès.',
+//             'httpStatus' => 200
+//         ];
+
+//     } catch (\Exception $e) {
+//         // Ajouter les données pour le débogage
+//         return [
+//             'statut' => 'Echec',
+//             'data' => [],
+//             'message' => 'Erreur lors de l\'enregistrement : ' . $e->getMessage(),
+//             'httpStatus' => 500
+//         ];
+//     }
+// }
+
+
+    // public function store(StoreRequest $request)
+    // {
+    //     try {
+    //         $validatedData = $request->validated();
+    //         Log::info('Données validées : ', ['data' => $validatedData]);
+
+    //         $clientData = [
+    //             'surnom' => $validatedData['surnom'],
+    //             'telephone' => $validatedData['telephone'],
+    //             'adresse' => $validatedData['adresse'] ?? null,
+    //         ];
+
+    //         $userData = $validatedData['user'] ?? null;
+
+    //         if ($userData && User::where('login', $userData['login'])->exists()) {
+    //             return [
+    //                 'statut' => 'Echec',
+    //                 'data' => [],
+    //                 'message' => 'Le nom d\'utilisateur est déjà pris.',
+    //                 'httpStatus' => 409
+    //             ];
+    //         }
+
+    //         Log::info('Création du client avec données : ', [
+    //             'client' => $clientData,
+    //             'user' => $userData
+    //         ]);
+
+    //         $client = $this->clientService->createClient([
+    //             'client' => $clientData,
+    //             'user' => $userData
+    //         ]);
+
+    //         Log::info('Client créé : ', ['client' => $client->toArray()]);
+
+    //         if ($client) {
+    //             return [
+    //                 'statut' => 'Success',
+    //                 'data' => [
+    //                     'client' => $client->toArray(),
+    //                     //'user' => $client->user ? $client->user->toArray() : null
+    //                 ],
+    //                 'message' => 'Client enregistré avec succès.',
+    //                 'httpStatus' => 200
+    //             ];
+    //         } else {
+    //             return [
+    //                 'statut' => 'Echec',
+    //                 'data' => [],
+    //                 'message' => 'Erreur lors de l\'enregistrement du client.',
+    //                 'httpStatus' => 500
+    //             ];
+    //         }
+    //     } catch (\Exception $e) {
+    //         Log::error('Erreur lors de l\'enregistrement : ' . $e->getMessage());
+    //         return [
+    //             'statut' => 'Echec',
+    //             'data' => [],
+    //             'message' => 'Erreur lors de l\'enregistrement : ' . $e->getMessage(),
+    //             'httpStatus' => 500
+    //         ];
+    //     }
+    // }
+
+    public function store(StoreRequest $request)
 {
     try {
-        // Valider les données client et utilisateur grâce à StoreRequest
         $validatedData = $request->validated();
+        Log::info('Données validées : ', ['data' => $validatedData]);
 
-        // Extraire les données du client
         $clientData = [
             'surnom' => $validatedData['surnom'],
             'telephone' => $validatedData['telephone'],
             'adresse' => $validatedData['adresse'] ?? null,
         ];
 
-        // Extraire les données utilisateur si elles existent
         $userData = $validatedData['user'] ?? null;
 
-        // Vérifier si le login utilisateur existe déjà si des données utilisateur sont fournies
-        if ($userData && User::where('login', $userData['login'])->exists()) {
+        // Vérifiez si le login utilisateur est déjà pris
+        if ($userData && isset($userData['login']) && User::where('login', $userData['login'])->exists()) {
             return [
                 'statut' => 'Echec',
                 'data' => [],
@@ -158,33 +279,59 @@ public function store(StoreRequest $request)
             ];
         }
 
+        Log::info('Création du client avec données : ', [
+            'client' => $clientData,
+            'user' => $userData
+        ]);
+
+        // Créez le client avec les données
         $client = $this->clientService->createClient([
             'client' => $clientData,
             'user' => $userData
         ]);
 
-        // if (request()->hasFile('photo')) {
-        //     $file = request()->file('photo');
-        //     // Sauvegarder le fichier temporairement
+        Log::info('Client créé : ', ['client' => $client->toArray()]);
+
+        // // Gestion de la photo utilisateur, si présente
+        // if ($userData && isset($userData['photo']) && $request->hasFile('user.photo')) {
+        //     $file = $request->file('user.photo');
+            
+        //     // Sauvegarder le fichier temporairement dans le système de fichiers
         //     $tempPath = $file->store('temp');
-        //     StoreImageInCloud::dispatch($userData, $tempPath);
+            
+        //     // Émettre l'événement UserCreated avec l'utilisateur et le chemin de la photo
+        //     event(new UserCreated($client->user, $tempPath));
         // }
+        if ($userData!=null) {
+            // Générer la carte de fidélité (si nécessaire) et obtenir le chemin du PDF
+            $loyaltyCardService = app(ILoyaltyCardService::class);
+            $pdfPath = $loyaltyCardService->generateLoyaltyCard($client);
 
-        // Préparer les données à retourner
-        $responseData = [
-            'client' => $client,
-        ];
+            // Envoi de l'email avec la carte de fidélité en pièce jointe
+            Mail::to($client->user->email)->send(new ClientLoyaltyCardMail($client, $pdfPath));
 
-        // Retourner la réponse avec succès
-        return [
-            'statut' => 'Success',
-            'data' => $responseData,
-            'message' => 'Client enregistré avec succès.',
-            'httpStatus' => 200
-        ];
+        }
 
+        if ($client) {
+            return [
+                'statut' => 'Success',
+                'data' => [
+                    'client' => $client->toArray(),
+                    //'user' => $client->user ? $client->user->toArray() : null
+                ],
+                'message' => 'Client enregistré avec succès.',
+                'httpStatus' => 200
+            ];
+        } else {
+            return [
+                'statut' => 'Echec',
+                'data' => [],
+                'message' => 'Erreur lors de l\'enregistrement du client.',
+                'httpStatus' => 500
+            ];
+        }
     } catch (\Exception $e) {
-        // Ajouter les données pour le débogage
+        Log::error('Erreur lors de l\'enregistrement : ' . $e->getMessage());
         return [
             'statut' => 'Echec',
             'data' => [],
@@ -193,6 +340,7 @@ public function store(StoreRequest $request)
         ];
     }
 }
+
 
      public function registerClientForExistingClient(RegisterRequest $request, $clientId)
      {

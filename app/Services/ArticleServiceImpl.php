@@ -41,8 +41,9 @@ class ArticleServiceImpl implements ArticleService
 
     public function findByLibelle($libelle)
     {
+        // Appel au repository pour chercher l'article par libellé
         return $this->articleRepository->findByLibelle($libelle);
-    }
+    }    
 
     public function findByEtat($etat)
     {

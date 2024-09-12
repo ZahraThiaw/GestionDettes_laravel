@@ -18,6 +18,7 @@ use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Support\Facades\Storage;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class ClientRepository implements ClientRepositoryInterface
@@ -81,54 +82,96 @@ class ClientRepository implements ClientRepositoryInterface
     //     return Client::create($data);
     // }
 
-    public function create($data)
-    {
-        DB::beginTransaction();
+    // public function create($data)
+    // {
+    //     DB::beginTransaction();
     
-        try {
-            // Récupérer les données client
-            $clientData = $data['client'];
+    //     try {
+    //         // Récupérer les données client
+    //         $clientData = $data['client'];
     
-            // Récupérer les données utilisateur si disponibles
-            $userData = isset($data['user']) ? $data['user'] : null;
+    //         // Récupérer les données utilisateur si disponibles
+    //         $userData = isset($data['user']) ? $data['user'] : null;
     
-            // Créer le client d'abord pour obtenir l'ID
-            $client = Client::create($clientData);
+    //         // Créer le client d'abord pour obtenir l'ID
+    //         $client = Client::create($clientData);
     
-            // Si des données utilisateur existent, créer le compte utilisateur
-            if ($userData) {
-                // Récupérer l'ID du rôle "Client"
-                $roleClient = Role::where('name', 'Client')->first();
+    //         // Si des données utilisateur existent, créer le compte utilisateur
+    //         if ($userData) {
+    //             // Récupérer l'ID du rôle "Client"
+    //             $roleClient = Role::where('name', 'Client')->first();
     
-                // Vérifier que le rôle existe
-                if (!$roleClient) {
-                    throw new RepositoryException('Le rôle "Client" n\'existe pas.');
-                }
+    //             // Vérifier que le rôle existe
+    //             if (!$roleClient) {
+    //                 throw new RepositoryException('Le rôle "Client" n\'existe pas.');
+    //             }
     
-                $userData['role_id'] = $roleClient->id;
+    //             $userData['role_id'] = $roleClient->id;
     
-                // Créer l'utilisateur avec le rôle "Client"
-                $user = User::create($userData);
-                $client->user()->associate($user);
-                $client->save();
-            }
+    //             // Créer l'utilisateur avec le rôle "Client"
+    //             $user = User::create($userData);
+    //             $client->user()->associate($user);
+    //             $client->save();
+    //         }
             
-                // Générer la carte de fidélité (si nécessaire) et obtenir le chemin du PDF
-                $loyaltyCardService = app(ILoyaltyCardService::class);
-                $pdfPath = $loyaltyCardService->generateLoyaltyCard($client);
+    //             // Générer la carte de fidélité (si nécessaire) et obtenir le chemin du PDF
+    //             $loyaltyCardService = app(ILoyaltyCardService::class);
+    //             $pdfPath = $loyaltyCardService->generateLoyaltyCard($client);
 
-                // Envoi de l'email avec la carte de fidélité en pièce jointe
-                Mail::to($client->user->email)->send(new ClientLoyaltyCardMail($client, $pdfPath));
+    //             // Envoi de l'email avec la carte de fidélité en pièce jointe
+    //             Mail::to($client->user->email)->send(new ClientLoyaltyCardMail($client, $pdfPath));
     
-            DB::commit();
-            return [
-                'client' => $client->load('user'), // Charge l'utilisateur associé
-            ];
-        } catch (RepositoryException $e) {
-            DB::rollBack();
-            throw $e;
+    //         DB::commit();
+    //         return [
+    //             'client' => $client->load('user'), // Charge l'utilisateur associé
+    //         ];
+    //     } catch (RepositoryException $e) {
+    //         DB::rollBack();
+    //         throw $e;
+    //     }
+    // }
+
+    public function create($data)
+{
+    DB::beginTransaction();
+    
+    try {
+        $clientData = $data['client'];
+        $client = Client::create($clientData);
+
+        if (isset($data['user'])) {
+            $userData = $data['user'];
+            $roleClient = Role::where('name', 'Client')->first();
+
+            if (!$roleClient) {
+                throw new \Exception('Le rôle "Client" n\'existe pas.');
+            }
+
+            $userData['role_id'] = $roleClient->id;
+            $user = User::create($userData);
+            $client->user()->associate($user);
+            $client->save();
         }
+
+        DB::commit();
+
+        // // Générer la carte de fidélité (si nécessaire) et obtenir le chemin du PDF
+        // $loyaltyCardService = app(ILoyaltyCardService::class);
+        // $pdfPath = $loyaltyCardService->generateLoyaltyCard($client);
+
+        // // Envoi de l'email avec la carte de fidélité en pièce jointe
+        // Mail::to($client->user->email)->send(new ClientLoyaltyCardMail($client, $pdfPath));
+
+        // Charger l'utilisateur associé et retourner le client
+        $client->load('user');
+        return $client;
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Erreur lors de la création du client : ' . $e->getMessage());
+        throw $e;
     }
+}
 
     public function update($id, array $data)
     {

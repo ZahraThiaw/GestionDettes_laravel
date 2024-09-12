@@ -8,6 +8,7 @@ use App\Http\Resources\ArticleResource;
 use App\Models\Article;
 //use App\Traits\Response;
 use App\Enums\StatutResponse;
+use App\Http\Requests\UpdateStockRequest;
 use App\Services\ArticleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,47 +35,84 @@ class ArticleController extends Controller
             $articles = $this->articleService->findByEtat($disponible);
 
             if ($articles->isEmpty()) {
-                return response()->json([
+                return [
                     'statut' => 'Echec',
                     'data' => [],
                     'message' => 'Aucun article trouvé pour cet état.',
                     'httpStatus' => 404
-                ], 404);
+                ];
             }
 
-            return response()->json([
+            return [
                 'statut' => 'Success',
                 'data' => ArticleResource::collection($articles),
                 'message' => 'Liste des articles filtrée par disponibilité récupérée avec succès.',
                 'httpStatus' => 200
-            ], 200);
+            ];
         }
 
         // Si le paramètre de disponibilité n'est pas fourni, ou n'est pas valide
         $articles = $this->articleService->all();
 
         if ($articles->isEmpty()) {
-            return response()->json([
+            return [
                 'statut' => 'Echec',
                 'data' => [],
                 'message' => 'Aucun article trouvé.',
                 'httpStatus' => 404
-            ], 404);
+            ];
         }
 
-        return response()->json([
+        return [
             'statut' => 'Success',
-            'data' => new ArticleResource($articles),
+            'data' => ArticleResource::collection($articles),
             'message' => 'Liste des articles récupérée avec succès.',
             'httpStatus' => 200
-        ], 200);
+        ];
     }
+
+    // public function filterByLibelle(Request $request)
+    // {
+    //     $libelle = $request->input('libelle');
+    //     $article = $this->articleService->findByLibelle($libelle);
+
+    //     if (!$article) {
+    //         return [
+    //             'statut' => 'Echec',
+    //             'data' => [],
+    //             'message' => 'Aucun article trouvé avec ce libellé',
+    //             'httpStatus' => 404
+    //         ];
+    //     }
+
+    
+    //     return [
+    //         'statut' => 'Success',
+    //         'data' => new ArticleResource($article),
+    //         'message' => 'Article récupéré avec succès.',
+    //         'httpStatus' => 200
+    //     ];
+    // }
+
 
     public function filterByLibelle(Request $request)
     {
         $libelle = $request->input('libelle');
+
+        // Vérification si le champ libelle est fourni
+        if (empty($libelle)) {
+            return [
+                'statut' => 'Echec',
+                'data' => [],
+                'message' => 'Le champ libellé est requis',
+                'httpStatus' => 400
+            ];
+        }
+
+        // Rechercher l'article en appelant le service
         $article = $this->articleService->findByLibelle($libelle);
 
+        // Vérifier si un article est trouvé
         if (!$article) {
             return [
                 'statut' => 'Echec',
@@ -84,7 +122,7 @@ class ArticleController extends Controller
             ];
         }
 
-    
+        // Article trouvé, retour de la réponse avec succès
         return [
             'statut' => 'Success',
             'data' => new ArticleResource($article),
@@ -92,6 +130,7 @@ class ArticleController extends Controller
             'httpStatus' => 200
         ];
     }
+
 
     public function show($id)
     {
@@ -141,16 +180,37 @@ class ArticleController extends Controller
     }
 
 
-    public function updateStock(Request $request)
-    {
-        $updatedArticles = $this->articleService->updateStock($request->all());
+    // public function updateStock(Request $request)
+    // {
+    //     $updatedArticles = $this->articleService->updateStock($request->all());
 
-        return [
+    //     return [
+    //         'statut' => 'Success',
+    //         'data' => ArticleResource::collection($updatedArticles),
+    //         'message' => 'Mise à jour du stock effectuée avec succès',
+    //         'httpStatus' => 200
+    //     ];
+    // }
+
+
+    // Mise à jour du stock
+    public function updateStock(UpdateStockRequest $request)
+    {
+        // Récupération de la liste des articles depuis la requête validée
+        $articlesData = $request->input('articles');
+
+        // Mise à jour du stock via le service
+        $stockUpdateResult = $this->articleService->updateStock($articlesData);
+
+        // Réponse formatée
+        return response()->json([
             'statut' => 'Success',
-            'data' => ArticleResource::collection($updatedArticles),
-            'message' => 'Mise à jour du stock effectuée avec succès',
+            'data' => [
+                'success' => ArticleResource::collection($stockUpdateResult['success']),
+                'error' => $stockUpdateResult['error'], // Liste des ID non trouvés
+            ],
             'httpStatus' => 200
-        ];
+        ], 200);
     }
 
     public function destroy($id)

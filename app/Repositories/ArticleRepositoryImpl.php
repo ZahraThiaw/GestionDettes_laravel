@@ -43,9 +43,16 @@ class ArticleRepositoryImpl implements ArticleRepository
 
     }
 
+    // public function findByLibelle($libelle)
+    // {
+    //     return Article::where('libelle', 'LIKE', "%{$libelle}%")->whereNull('deleted_at')->first();
+    // }
+
     public function findByLibelle($libelle)
     {
-        return Article::where('libelle', 'LIKE', "%{$libelle}%")->whereNull('deleted_at')->first();
+        return Article::where('libelle', '=', $libelle)
+                    ->whereNull('deleted_at')
+                    ->first();
     }
 
     public function findByEtat($etat)
@@ -63,18 +70,41 @@ class ArticleRepositoryImpl implements ArticleRepository
     }
 
 
+    // public function updateStock(array $articlesData)
+    // {
+    //     $updatedArticles = [];
+    //     foreach ($articlesData as $articleData) {
+    //         $article = $this->find($articleData['id']);
+    //         if ($article) {
+    //             $article->qteStock += $articleData['qteStock'];
+    //             $article->save();
+    //             $updatedArticles[] = $article;
+    //         }
+    //     }
+    //     return $updatedArticles;
+    // }
+
     public function updateStock(array $articlesData)
     {
         $updatedArticles = [];
+        $notFoundArticles = [];
+
         foreach ($articlesData as $articleData) {
-            $article = $this->find($articleData['id']);
+            $article = $this->find($articleData['id']);  // Recherche de l'article par ID
             if ($article) {
+                // Mise à jour de la quantité en stock
                 $article->qteStock += $articleData['qteStock'];
                 $article->save();
-                $updatedArticles[] = $article;
+                $updatedArticles[] = $article;  // Ajout aux articles mis à jour
+            } else {
+                $notFoundArticles[] = $articleData;  // Ajout aux articles non trouvés
             }
         }
-        return $updatedArticles;
+
+        return [
+            'success' => $updatedArticles,     // Liste des articles mis à jour
+            'error' => $notFoundArticles       // Liste des articles non trouvés
+        ];
     }
 
     public function restore($id)

@@ -17,27 +17,44 @@ class SmsDette
 
     public function sendDebtReminders()
     {
+        // Récupérer toutes les dettes avec leurs paiements et clients
         $dettes = Dette::with('paiements', 'client')->get();
-        $sentReminders = [];
 
+        // Regrouper les dettes par client
+        $clients = [];
         foreach ($dettes as $dette) {
             $totalPaiements = $dette->paiements->sum('montant');
             $montantRestant = $dette->montant - $totalPaiements;
 
             if ($montantRestant > 0) {
-                $clientPhoneNumber = $dette->client->telephone;
-                $clientName = $dette->client->surnom;
-
-                try {
-                    $this->smsService->sendSmsToClient($clientPhoneNumber, $montantRestant, $clientName);
-                    $sentReminders[] = [
-                        'client' => $clientName,
-                        'telephone' => $clientPhoneNumber,
-                        'montant_restant' => $montantRestant,
+                $clientId = $dette->client->id;
+                if (!isset($clients[$clientId])) {
+                    $clients[$clientId] = [
+                        'client' => $dette->client,
+                        'montantRestant' => 0,
                     ];
-                } catch (\Exception $e) {
-                    Log::error("Erreur lors de l'envoi du SMS au client $clientName ($clientPhoneNumber): " . $e->getMessage());
                 }
+                $clients[$clientId]['montantRestant'] += $montantRestant;
+            }
+        }
+
+        // Envoyer les rappels de dettes
+        $sentReminders = [];
+        foreach ($clients as $clientId => $clientData) {
+            $client = $clientData['client'];
+            $montantRestant = $clientData['montantRestant'];
+            $clientPhoneNumber = $client->telephone;
+            $clientName = $client->surnom;
+
+            try {
+                $this->smsService->sendSmsToClient($clientPhoneNumber, $montantRestant, $clientName);
+                $sentReminders[] = [
+                    'client' => $clientName,
+                    'telephone' => $clientPhoneNumber,
+                    'montant_restant' => $montantRestant,
+                ];
+            } catch (\Exception $e) {
+                Log::error("Erreur lors de l'envoi du SMS au client $clientName ($clientPhoneNumber): " . $e->getMessage());
             }
         }
 
