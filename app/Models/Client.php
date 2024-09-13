@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Scopes\FilterByTelephoneScope;
+use Illuminate\Notifications\Notifiable;
 
 class Client extends Model
 {
-    use HasFactory;
+    use HasFactory , Notifiable;
 
     protected $fillable = [
         'surnom',
@@ -55,5 +56,15 @@ class Client extends Model
     {
         return $this->user && $this->user->active; // Si le client a un utilisateur associé et si son compte est actif
     }  
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at'); // Retourne le constructeur de requêtes
+    }
+
+    public function readNotifications()
+    {
+        return $this->notifications()->whereNotNull('read_at'); // Retourne le constructeur de requêtes
+    }
 
 }

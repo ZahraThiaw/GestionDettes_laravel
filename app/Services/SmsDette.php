@@ -4,23 +4,16 @@ namespace App\Services;
 
 use App\Services\Contracts\SmsServiceInterface;
 use App\Models\Dette;
-use Illuminate\Support\Facades\Log;
+use App\Models\Client;
+use App\Notifications\DebtReminderNotification;
 
 class SmsDette
 {
-    protected $smsService;
-
-    public function __construct(SmsServiceInterface $smsService)
-    {
-        $this->smsService = $smsService;
-    }
-
     public function sendDebtReminders()
     {
         // Récupérer toutes les dettes avec leurs paiements et clients
         $dettes = Dette::with('paiements', 'client')->get();
 
-        // Regrouper les dettes par client
         $clients = [];
         foreach ($dettes as $dette) {
             $totalPaiements = $dette->paiements->sum('montant');
@@ -38,26 +31,82 @@ class SmsDette
             }
         }
 
-        // Envoyer les rappels de dettes
-        $sentReminders = [];
-        foreach ($clients as $clientId => $clientData) {
+        // Envoyer la notification à chaque client
+        foreach ($clients as $clientData) {
             $client = $clientData['client'];
             $montantRestant = $clientData['montantRestant'];
-            $clientPhoneNumber = $client->telephone;
-            $clientName = $client->surnom;
+            $client->notify(new DebtReminderNotification($client->surnom, $client->telephone, $montantRestant));
+        }
 
-            try {
-                $this->smsService->sendSmsToClient($clientPhoneNumber, $montantRestant, $clientName);
-                $sentReminders[] = [
-                    'client' => $clientName,
-                    'telephone' => $clientPhoneNumber,
+        return $clients;
+    }
+
+    public function sendDebtReminderToOneClient(Client $client)
+    {
+        // Récupérer les dettes du client
+        $dettes = Dette::where('client_id', $client->id)->with('paiements')->get();
+        $montantRestant = 0;
+
+        foreach ($dettes as $dette) {
+            $totalPaiements = $dette->paiements->sum('montant');
+            $montantRestant += $dette->montant - $totalPaiements;
+        }
+
+        if ($montantRestant > 0) {
+            // Créer la notification de rappel
+            $notification = new DebtReminderNotification($client->surnom, $client->telephone, $montantRestant);
+
+            // Envoyer la notification au client
+            $client->notify($notification);
+
+            // Retourner la notification envoyée
+            return $notification;
+        }
+
+        // Retourner null si le client n'a pas de dettes non soldées
+        return null;
+    }
+
+    public function sendDebtRemindersToClients($clients)
+    {
+        $clientIdsValidWithDebt = [];
+        $clientIdsValidWithoutDebt = [];
+        $clientIdsInvalid = [];
+
+        foreach ($clients as $client) {
+            if (!$client) {
+                $clientIdsInvalid[] = $client->id ;
+                continue;
+            }
+
+            // Récupérer les dettes du client
+            $dettes = Dette::where('client_id', $client->id)->with('paiements')->get();
+            $montantRestant = 0;
+
+            foreach ($dettes as $dette) {
+                $totalPaiements = $dette->paiements->sum('montant');
+                $montantRestant += $dette->montant - $totalPaiements;
+            }
+
+            if ($montantRestant > 0) {
+                // Ajouter aux clients avec dettes non soldées
+                $clientIdsValidWithDebt[] = [
+                    'client_id' => $client->id,
                     'montant_restant' => $montantRestant,
                 ];
-            } catch (\Exception $e) {
-                Log::error("Erreur lors de l'envoi du SMS au client $clientName ($clientPhoneNumber): " . $e->getMessage());
+
+                // Envoyer la notification uniquement si le client a des dettes non soldées
+                $client->notify(new DebtReminderNotification($client->surnom, $client->telephone, $montantRestant));
+            } else {
+                // Ajouter aux clients valides mais sans dettes non soldées
+                $clientIdsValidWithoutDebt[] = $client->id;
             }
         }
 
-        return $sentReminders;
+        return [
+            'clients_avec_dettes' => $clientIdsValidWithDebt,
+            'clients_sans_dettes' => $clientIdsValidWithoutDebt,
+            'clients_invalides' => $clientIdsInvalid,
+        ];
     }
 }

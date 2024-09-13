@@ -14,41 +14,6 @@ class SmsService implements SmsServiceInterface
     protected $apiKey = '84b7ddeecb7281ca14c6e5ed43863852-bdfdbd3b-20aa-4dae-a647-8f3e2c938cc6';
     protected $fromNumber = '447491163443';
 
-    public function sendDebtReminderToClients()
-    {
-        $dettes = Dette::with('paiements', 'client')->get();
-
-        $clients = [];
-        foreach ($dettes as $dette) {
-            $totalPaiements = $dette->paiements->sum('montant');
-            $montantRestant = $dette->montant - $totalPaiements;
-
-            if ($montantRestant > 0) {
-                $clientId = $dette->client->id;
-                if (!isset($clients[$clientId])) {
-                    $clients[$clientId] = [
-                        'client' => $dette->client,
-                        'montantRestant' => 0,
-                    ];
-                }
-                $clients[$clientId]['montantRestant'] += $montantRestant;
-            }
-        }
-
-        foreach ($clients as $clientId => $clientData) {
-            $client = $clientData['client'];
-            $montantRestant = $clientData['montantRestant'];
-            $clientPhoneNumber = $client->telephone;
-            $clientName = $client->surnom;
-
-            try {
-                $this->sendSmsToClient($clientPhoneNumber, $montantRestant, $clientName);
-            } catch (Exception $e) {
-                Log::error("Erreur lors de l'envoi du SMS au client $clientName ($clientPhoneNumber) : " . $e->getMessage());
-            }
-        }
-    }
-
     public function sendSmsToClient($toPhoneNumber, $montantRestant, $clientName)
     {
         $message = "Cher(e) $clientName, vous avez un montant restant de $montantRestant FCFA à régler. Merci de procéder au paiement.";

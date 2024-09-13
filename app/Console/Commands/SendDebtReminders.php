@@ -8,7 +8,8 @@ use Illuminate\Console\Command;
 class SendDebtReminders extends Command
 {
     protected $signature = 'sms:send-debt-reminders';
-    protected $description = 'Envoie des rappels de dettes par SMS à tous les clients ayant des dettes impayées';
+    protected $description = 'Envoie des rappels de dettes par SMS et affiche les clients concernés';
+
     protected $smsDette;
 
     public function __construct(SmsDette $smsDette)
@@ -19,17 +20,16 @@ class SendDebtReminders extends Command
 
     public function handle()
     {
-        // Envoyer les rappels de dettes et obtenir les informations des clients traités
-        $sentReminders = $this->smsDette->sendDebtReminders();
+        $clients = $this->smsDette->sendDebtReminders();
 
-        // Afficher les informations des clients traités
-        if (!empty($sentReminders)) {
-            $this->info('Les rappels de dettes ont été envoyés aux clients suivants:');
-            foreach ($sentReminders as $reminder) {
-                $this->info("Client: {$reminder['client']}, Téléphone: {$reminder['telephone']}, Montant Restant: {$reminder['montant_restant']} FCFA");
-            }
-        } else {
-            $this->info('Aucun rappel de dette n\'a été envoyé.');
+        // Afficher les informations des clients
+        $this->info("Les rappels de dettes ont été envoyés aux clients suivants :");
+        foreach ($clients as $clientData) {
+            $client = $clientData['client'];
+            $montantRestant = $clientData['montantRestant'];
+            $this->line("Client: {$client->surnom}, Téléphone: {$client->telephone}, Montant Restant: $montantRestant FCFA");
         }
+
+        return 0;
     }
 }

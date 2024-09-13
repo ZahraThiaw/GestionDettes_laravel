@@ -9,6 +9,7 @@ use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EmailTestController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -106,6 +107,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/dettes/{id}/paiements', [DetteController::class, 'listPaiements']);
             Route::post('/dettes/{id}/paiements', [DetteController::class, 'addPaiement']);
 
+            Route::get('notification/client/{id}', [NotificationController::class, 'sendToOneClient']);
+            Route::post('notification/client/all', [NotificationController::class, 'sendToSpecificClients']);
+
+
         });
 
         // Routes accessibles uniquement par les Admins
@@ -114,6 +119,11 @@ Route::prefix('v1')->group(function () {
             Route::post('clients/{id}/user', [ClientController::class, 'showClientWithUser']);
 
             Route::post('clients/{id}/dettes', [DetteController::class, 'getClientDettes']);
+        });
+
+        Route::middleware('can:isClient')->group(function (){
+            Route::get('notifications/unread', [NotificationController::class, 'getUnreadNotifications']);
+            Route::get('notifications/read', [NotificationController::class, 'getReadNotifications']);
         });
 
     });

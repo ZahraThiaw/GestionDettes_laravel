@@ -9,7 +9,7 @@ interface SmsServiceInterface
      *
      * @return void
      */
-    public function sendDebtReminderToClients();
+    //public function sendDebtReminderToClients();
 
     /**
      * Envoyer un SMS à un client spécifique.

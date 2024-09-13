@@ -2,53 +2,41 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class DebtReminderNotification extends Notification
 {
-    use Queueable;
+    protected $montantRestant;
+    protected $clientName;
+    protected $clientPhoneNumber;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct()
+    public function __construct($clientName, $clientPhoneNumber, $montantRestant)
     {
-        //
+        $this->montantRestant = $montantRestant;
+        $this->clientName = $clientName;
+        $this->clientPhoneNumber = $clientPhoneNumber;
     }
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
+    public function via($notifiable)
     {
-        return ['mail'];
+        return ['database', 'sms'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
-    public function toMail(object $notifiable): MailMessage
-    {
-        return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
-    }
-
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(object $notifiable): array
+    // Déclaration correcte de la méthode toSms
+    public function toSms($notifiable)
     {
         return [
-            //
+            'to' => $this->clientPhoneNumber,
+            'client_name' => $this->clientName,
+            'amount' => $this->montantRestant,
+        ];
+    }
+
+    // Méthode pour le stockage dans la base de données
+    public function toDatabase($notifiable)
+    {
+        return [
+            'message' => "Cher(e) {$this->clientName}, vous avez un montant restant de {$this->montantRestant} FCFA à régler. Merci de procéder au paiement."
         ];
     }
 }

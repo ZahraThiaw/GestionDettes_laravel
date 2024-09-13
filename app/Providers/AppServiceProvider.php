@@ -21,12 +21,17 @@ use App\Services\Contracts\ILoyaltyCardService;
 use App\Services\Contracts\IQrCodeService;
 // use App\Services\CloudUploadService;
 use App\Services\Contracts\IUploadService;
+use App\Services\Contracts\SmsServiceInterface;
 use App\Services\DebtArchivingService;
 use App\Services\DetteService;
 use App\Services\DetteServiceInterface;
 use App\Services\FirebaseArchivingService;
 use App\Services\LoyaltyCardService;
 use App\Services\QrCodeService;
+use App\Notifications\Channels\SmsChannel;
+use App\Services\SmsService;
+use App\Services\TwilioSmsService;
+use Illuminate\Support\Facades\Notification;
 
 // use App\Services\UploadService;
 
@@ -68,13 +73,31 @@ class AppServiceProvider extends ServiceProvider
 
         // Lier l'interface DetteService à son implémentation
         $this->app->bind(DetteServiceInterface::class, DetteService::class);
+
+        // // Liaison de l'interface SmsServiceInterface à une implémentation
+        // $this->app->singleton(SmsServiceInterface::class, function ($app) {
+        //     $smsService = env('SMS_SERVICE', 'twilio');
+
+        //     switch ($smsService) {
+        //         case 'infobip':
+        //             return new SmsService();
+        //         case 'twilio':
+        //             return new TwilioSmsService();
+        //         default:
+        //             throw new \Exception("Service SMS inconnu : $smsService");
+        //     }
+        // });
     }
 
-    // public function boot()
-    // {
-    //     //
-    //     // Enregistrer l'observer pour User
-    //     User::observe(UserObserver::class);
-    // }
+    public function boot()
+    {
+        //
+        // // Enregistrer l'observer pour User
+        // User::observe(UserObserver::class);
+
+        // Notification::extend('sms', function ($app) {
+        //     return new SmsChannel($app->make(SmsServiceInterface::class));
+        // });
+    }
 }
 
