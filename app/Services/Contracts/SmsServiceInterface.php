@@ -19,5 +19,5 @@ interface SmsServiceInterface
      * @param string $clientName Le nom du client
      * @return void
      */
-    public function sendSmsToClient($toPhoneNumber, $montantRestant, $clientName);
+    public function sendSmsToClient($toPhoneNumber, $montantRestant, $clientName, $message);
 }

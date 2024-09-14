@@ -109,6 +109,8 @@ Route::prefix('v1')->group(function () {
 
             Route::get('notification/client/{id}', [NotificationController::class, 'sendToOneClient']);
             Route::post('notification/client/all', [NotificationController::class, 'sendToSpecificClients']);
+            Route::post('notification/client/message', [NotificationController::class, 'sendCustomMessageToClients']);
+
 
 
         });

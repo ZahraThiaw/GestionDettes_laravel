@@ -22,9 +22,9 @@ class TwilioSmsService implements SmsServiceInterface
         $this->twilioClient = new Client($accountSid, $authToken);
     }
 
-    public function sendSmsToClient($toPhoneNumber, $montantRestant, $clientName)
+    public function sendSmsToClient($toPhoneNumber, $montantRestant, $clientName, $message)
     {
-        $message = "Cher(e) $clientName, vous avez un montant restant de $montantRestant FCFA à régler. Merci de procéder au paiement.";
+        //$message = "Cher(e) $clientName, vous avez un montant restant de $montantRestant FCFA à régler. Merci de procéder au paiement.";
 
         try {
             $this->twilioClient->messages->create(

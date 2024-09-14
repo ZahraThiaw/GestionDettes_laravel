@@ -14,9 +14,9 @@ class SmsService implements SmsServiceInterface
     protected $apiKey = '84b7ddeecb7281ca14c6e5ed43863852-bdfdbd3b-20aa-4dae-a647-8f3e2c938cc6';
     protected $fromNumber = '447491163443';
 
-    public function sendSmsToClient($toPhoneNumber, $montantRestant, $clientName)
+    public function sendSmsToClient($toPhoneNumber, $montantRestant, $clientName, $message)
     {
-        $message = "Cher(e) $clientName, vous avez un montant restant de $montantRestant FCFA à régler. Merci de procéder au paiement.";
+        //$message = "Cher(e) $clientName, vous avez un montant restant de $montantRestant FCFA à régler. Merci de procéder au paiement.";
 
         $request = new HTTP_Request2();
         $request->setUrl($this->apiUrl);

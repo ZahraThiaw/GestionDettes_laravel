@@ -17,13 +17,14 @@ class SmsChannel
     public function send($notifiable, Notification $notification)
     {
         if (method_exists($notification, 'toSms')) {
-            $message = $notification->toSms($notifiable);
+            $messagesms = $notification->toSms($notifiable);
 
             // Envoyer le SMS via le service configuré
             $this->smsService->sendSmsToClient(
-                $message['to'],
-                $message['amount'],
-                $message['client_name']
+                $messagesms['to'],
+                $messagesms['amount'],
+                $messagesms['client_name'],
+                $messagesms['message']
             );
         }
     }

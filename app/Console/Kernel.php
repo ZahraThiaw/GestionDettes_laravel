@@ -25,6 +25,8 @@ class Kernel extends ConsoleKernel
         $schedule->command('sms:send-debt-reminders')
                  ->fridays()
                  ->at('14:00');
+    
+        //$schedule->command('notification:send-overdue-debt-reminders')->daily();
     }
 
     /**
@@ -42,6 +44,7 @@ class Kernel extends ConsoleKernel
         \App\Console\Commands\ArchiveDebtsCommand::class,
         \App\Console\Commands\SendDebtSummarySmsCommand::class,
         \App\Console\Commands\SendDebtReminders::class,
+        \App\Console\Commands\SendDebtReminderNotification::class,
     ];
     
 }

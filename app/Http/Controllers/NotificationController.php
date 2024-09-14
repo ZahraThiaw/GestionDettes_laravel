@@ -119,31 +119,31 @@ class NotificationController extends Controller
         $client = Client::find($id);
 
         if (!$client) {
-            return response()->json([
+            return[
                 'status' => 'error',
                 'message' => 'Client non trouvé',
-            ], 404);
+            ];
         }
 
         // Utiliser le service pour envoyer une notification de rappel
         $notification = $this->smsDette->sendDebtReminderToOneClient($client);
 
         if (!$notification) {
-            return response()->json([
+            return [
                 'status' => 'info',
                 'message' => 'Le client n\'a pas de dettes non soldées.',
-            ], 200);
+            ];
         }
 
         // Retourner la notification envoyée si tout est valide
-        return response()->json([
+        return[
             'status' => 'success',
             'message' => 'Notification envoyée au client.',
             'notification' => [
                 'client_surnom' => $client->surnom,
                 'client_telephone' => $client->telephone,
             ],
-        ], 200);
+        ];
     }
 
     public function sendToSpecificClients(Request $request)
@@ -152,10 +152,10 @@ class NotificationController extends Controller
         $clientIds = $request->input('client_ids');
 
         if (empty($clientIds) || !is_array($clientIds)) {
-            return response()->json([
+            return [
                 'status' => 'error',
                 'message' => 'Veuillez fournir une liste valide d\'ID de clients.'
-            ], 400);
+            ];
         }
 
         // Récupérer les clients à partir des IDs
@@ -165,12 +165,40 @@ class NotificationController extends Controller
         $result = $this->smsDette->sendDebtRemindersToClients($clients);
 
         // Retourner la réponse avec les 3 listes
-        return response()->json([
+        return [
             'status' => 'success',
             'message' => 'Notifications envoyées aux clients avec des dettes.',
             'clients_avec_dettes' => $result['clients_avec_dettes'],
             'clients_sans_dettes' => $result['clients_sans_dettes'],
             'clients_invalides' => $result['clients_invalides']
-        ], 200);
+        ];
+    }
+
+
+    public function sendCustomMessageToClients(Request $request)
+    {
+        // Valider les données de la requête
+        $validatedData = $request->validate([
+            'client_ids' => 'required|array',
+            //'client_ids.*' => 'exists:clients,id', // Vérifier que les IDs existent dans la base
+            'message' => 'required|string|max:255',
+        ]);
+
+        // Récupérer les IDs de clients et le message personnalisé
+        $clientIds = $validatedData['client_ids'];
+        $customMessage = $validatedData['message'];
+
+        // Appeler le service pour envoyer les messages
+        $result = $this->smsDette->sendCustomMessageToClients($clientIds, $customMessage);
+
+        // Retourner la réponse au format JSON
+        return [
+            'status' => 'success',
+            'message' => 'Notifications envoyées aux clients avec le message personnalisé.',
+            'clients_avec_dettes' => $result['clients_avec_dettes'],
+            'clients_sans_dettes' => $result['clients_sans_dettes'],
+            'clients_invalides' => $result['clients_invalides']
+        ];
+        
     }
 }

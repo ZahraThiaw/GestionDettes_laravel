@@ -28,6 +28,10 @@ class Dette extends Model
         'id', // La clé primaire ne peut pas être modifiée
     ];
 
+    protected $casts = [
+        'date_echeance' => 'datetime', // Ceci convertira date_echeance en Carbon
+    ];
+
     /**
      * Relation avec le modèle Client.
      * Une dette appartient à un client.
