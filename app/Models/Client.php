@@ -67,4 +67,10 @@ class Client extends Model
         return $this->notifications()->whereNotNull('read_at'); // Retourne le constructeur de requêtes
     }
 
+    public function categorie()
+    {
+        return $this->belongsTo(Categorie::class);
+    }
+
+
 }
