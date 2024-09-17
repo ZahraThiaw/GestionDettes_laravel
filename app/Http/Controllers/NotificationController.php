@@ -201,4 +201,59 @@ class NotificationController extends Controller
         ];
         
     }
+
+    // public function getBoutiquierNotifications()
+    // {
+    //     // Récupérer l'utilisateur authentifié
+    //     $user = auth()->user();
+
+    //     // // Vérifier si l'utilisateur a le rôle de Boutiquier
+    //     // if (!$user->hasRole('Boutiquier')) {
+    //     //     return [
+    //     //         'status' => 'Echec',
+    //     //         'message' => 'Vous n\'êtes pas autorisé à consulter ces notifications.',
+    //     //         'HttpStatus' => 403
+    //     //     ];
+    //     // }
+
+    //     // Récupérer les notifications non lues de l'utilisateur
+    //     $notifications = $user->unreadNotifications;
+
+    //     return [
+    //         'status' => 'Success',
+    //         'notifications' => $notifications,
+    //         'HttpStatus' => 200
+    //     ];
+    // }
+
+    public function getBoutiquierNotifications()
+    {
+        $user = Auth::user();
+
+        // Obtenez les notifications non lues du client
+        $notifications = $user->unreadNotifications;
+
+        if($notifications->isEmpty()) {
+            return [
+                'statut' => 'Echec',
+                'data' => [],
+                'message' => 'Aucune notification de demandes soumis.',
+                'httpStatus' => 404
+            ];
+        }
+
+        // Marquez les notifications comme lues
+        foreach ($notifications as $notification) {
+            $notification->markAsRead();
+        }
+
+        // Retournez les notifications sous format JSON
+        return [
+            'statut' => 'Success',
+            'data' => $notifications,
+            'message' => 'Notifications de demandes soumis récupérées avec succès.',
+            'httpStatus' => 200
+        ];
+    }
+
 }

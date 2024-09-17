@@ -6,7 +6,7 @@ use App\Models\Demande;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
-class DebtRequestSubmittedNotification extends Notification
+class DebtRequestReadyNotification extends Notification
 {
     use Queueable;
 
@@ -25,7 +25,7 @@ class DebtRequestSubmittedNotification extends Notification
      */
     public function via($notifiable)
     {
-        return ['database'];
+        return ['database']; // Ajoutez 'mail' ou 'sms' si nécessaire.
     }
 
     /**
@@ -38,13 +38,7 @@ class DebtRequestSubmittedNotification extends Notification
     {
         return [
             'client' => $this->demande->client->surnom,
-            'articles' => $this->demande->articles->map(function($article) {
-                return [
-                    'libelle' => $article->libelle,
-                    'qteVente' => $article->pivot->qte,
-                ];
-            })->toArray(),
-            'message' => "Nouvelle demande de dette soumise par {$this->demande->client->surnom}.",
+            'message' => "Votre demande de dette a été validée. Veuillez passer prendre les produits au niveau de la boutique.",
         ];
     }
 
@@ -54,11 +48,11 @@ class DebtRequestSubmittedNotification extends Notification
      * @param  mixed  $notifiable
      * @return array
      */
-    // public function toSms($notifiable)
-    // {
-    //     return [
-    //         'to' => $notifiable->phone_number,
-    //         'message' => "Nouvelle demande de dette soumise par {$this->demande->client->surnom}.",
-    //     ];
-    // }
+    public function toSms($notifiable)
+    {
+        return [
+            'to' => $notifiable->phone_number,
+            'message' => "Votre demande de dette est prête. Passez prendre les produits à la boutique.",
+        ];
+    }
 }

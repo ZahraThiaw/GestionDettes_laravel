@@ -15,4 +15,5 @@ interface ArticleRepository
     public function findByEtat($etat);
     public function updateStock(array $articlesData);
     public function restore($id);
+    public function getAvailableQuantity(Article $article, $quantiteDemande);
 }

@@ -20,19 +20,19 @@ class DebtController extends Controller
     {
         try {
             $archivedDebts = $this->debtArchivingService->getArchivedDebts();
-            return response()->json([
+            return [
                 'statut' => 'Success',
                 'data' => $archivedDebts,
                 'message' => 'Liste des dettes archivées récupérée avec succès.',
                 'httpStatus' => 200
-            ], 200);
+            ];
         } catch (\Exception $e) {
-            return response()->json([
+            return[
                 'statut' => 'Echec',
                 'data' => [],
                 'message' => 'Impossible de récupérer les dettes archivées.',
                 'httpStatus' => 500
-            ], 500);
+            ];
         }
     }
 
@@ -41,19 +41,19 @@ class DebtController extends Controller
     {
         try {
             $clientDebts = $this->debtArchivingService->getArchivedDebtsByClient($clientId);
-            return response()->json([
+            return [
                 'statut' => 'Success',
                 'data' => $clientDebts,
                 'message' => 'Dettes du client récupérées avec succès.',
                 'httpStatus' => 200
-            ], 200);
+            ];
         } catch (\Exception $e) {
-            return response()->json([
+            return [
                 'statut' => 'Echec',
                 'data' => [],
                 'message' => 'Impossible de récupérer les dettes du client.',
                 'httpStatus' => 500
-            ], 500);
+            ];
         }
     }
 

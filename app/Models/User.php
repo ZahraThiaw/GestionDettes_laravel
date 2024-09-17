@@ -78,4 +78,9 @@ class User extends Authenticatable
         // Enregistrer l'observateur
         static::observe(UserObserver::class);
     }
+
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at'); // Retourne le constructeur de requêtes
+    }
 }

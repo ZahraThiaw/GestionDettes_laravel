@@ -111,8 +111,12 @@ Route::prefix('v1')->group(function () {
             Route::get('notification/client/{id}', [NotificationController::class, 'sendToOneClient']);
             Route::post('notification/client/all', [NotificationController::class, 'sendToSpecificClients']);
             Route::post('notification/client/message', [NotificationController::class, 'sendCustomMessageToClients']);
+            //Route::post('notification/client/all', [NotificationController::class, 'sendToSpecificClients']);
 
-
+            Route::get('demandes/notifications', [NotificationController::class, 'getBoutiquierNotifications']);
+            Route::get('demandes/all', [DemandeController::class, 'getAllClientDemandes']);
+            Route::get('demandes/{demandeId}/disponible', [DemandeController::class, 'checkDisponibilite']);
+            Route::patch('demandes/{demandeId}', [DemandeController::class, 'update']);
 
         });
 

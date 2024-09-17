@@ -111,4 +111,34 @@ class ArticleRepositoryImpl implements ArticleRepository
     {
         return Article::onlyTrashed()->findOrFail($id)->restore();
     }
+
+    // public function getAvailableQuantity(Article $article, $quantiteDemande)
+    // {
+    //     $quantiteStock = $article->qteStock;
+    //     $quantiteSeuil = $article->quantite_seuil;
+
+    //     $quantitedisponible = $quantiteStock - $quantiteSeuil;
+
+    //     if ($quantiteDemande >= $quantitedisponible) {
+
+    //         return $quantitedisponible;
+
+    //     }
+    // }
+
+    public function getAvailableQuantity(Article $article, $quantiteDemande)
+    {
+        $quantiteStock = $article->qteStock;
+        $quantiteSeuil = $article->quantite_seuil;
+
+        $quantiteDisponible = $quantiteStock - $quantiteSeuil;
+
+        // Vérifier si la quantité demandée est inférieure ou égale à la quantité disponible
+        if ($quantiteDemande <= $quantiteDisponible) {
+            return $quantiteDisponible; // Renvoie la quantité disponible
+        }
+
+        return null; // Indique que l'article ne peut pas satisfaire la demande
+    }
+
 }

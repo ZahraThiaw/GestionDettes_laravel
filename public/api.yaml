@@ -1407,18 +1407,8 @@ paths:
               properties:
                 client_id:
                   type: integer
-                  example: 1
+                  example: 158
                   description: "ID du client"
-                montant_total:
-                  type: number
-                  format: float
-                  example: 200.5
-                  description: "Le montant total de la dette"
-                montant_verse:
-                  type: number
-                  format: float
-                  example: 50.0
-                  description: "Le montant versé pour la dette"
                 articles:
                   type: array
                   description: "Liste des articles associés à la dette"
@@ -1428,13 +1418,13 @@ paths:
                       article_id:
                         type: integer
                         example: 1
-                      quantity:
+                        description: "ID de l'article"
+                      qteStock:
                         type: integer
                         example: 3
+                        description: "Quantité en stock de l'article"
               required:
                 - client_id
-                - montant_total
-                - montant_verse
                 - articles
       responses:
         201:
@@ -1453,15 +1443,32 @@ paths:
                       id:
                         type: integer
                         example: 1
+                        description: "ID de la dette"
                       client_id:
                         type: integer
-                        example: 1
+                        example: 158
+                        description: "ID du client"
                       montant_total:
                         type: number
                         example: 200.5
+                        description: "Montant total de la dette"
                       montant_verse:
                         type: number
                         example: 50.0
+                        description: "Montant versé sur la dette"
+                      articles:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            article_id:
+                              type: integer
+                              example: 1
+                              description: "ID de l'article"
+                            qteStock:
+                              type: integer
+                              example: 3
+                              description: "Quantité en stock de l'article"
                     description: "Les détails de la dette enregistrée"
                   message:
                     type: string
@@ -1501,6 +1508,7 @@ paths:
                   httpStatus:
                     type: integer
                     example: 500
+
     get:
       tags:
         - Dettes
@@ -1582,6 +1590,1430 @@ paths:
                     type: string
                     example: "Erreur lors de la récupération des dettes."
                   httpStatus:
+                    type: integer
+                    example: 500
+
+
+  /dettes/archive:
+    get:
+      tags:
+        - Dettes
+      security:
+        - bearerAuth: []
+      summary: "Obtenir toutes les dettes archivées"
+      description: "Récupère la liste de toutes les dettes archivées."
+      operationId: "getArchivedDebts"
+      responses:
+        200:
+          description: "Liste des dettes archivées récupérée avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    description: "Liste des dettes archivées"
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        client_id:
+                          type: integer
+                          example: 1
+                        montant_total:
+                          type: number
+                          format: float
+                          example: 200.5
+                        montant_verse:
+                          type: number
+                          format: float
+                          example: 50.0
+                        archived_at:
+                          type: string
+                          format: date-time
+                          example: "2024-09-16T00:00:00Z"
+                  message:
+                    type: string
+                    example: "Liste des dettes archivées récupérée avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        500:
+          description: "Erreur serveur lors de la récupération des dettes archivées"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Impossible de récupérer les dettes archivées."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+  /archive/clients/{clientId}/dettes:
+    get:
+      tags:
+        - Dettes
+      security:
+        - bearerAuth: []
+      summary: "Obtenir les dettes archivées d'un client spécifique"
+      description: "Récupère les dettes archivées pour un client spécifique basé sur son ID."
+      operationId: "getArchivedDebtsByClient"
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          description: "ID du client pour lequel récupérer les dettes archivées"
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: "Dettes archivées du client récupérées avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    description: "Liste des dettes archivées du client"
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        client_id:
+                          type: integer
+                          example: 1
+                        montant_total:
+                          type: number
+                          format: float
+                          example: 200.5
+                        montant_verse:
+                          type: number
+                          format: float
+                          example: 50.0
+                        archived_at:
+                          type: string
+                          format: date-time
+                          example: "2024-09-16T00:00:00Z"
+                  message:
+                    type: string
+                    example: "Dettes du client récupérées avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        500:
+          description: "Erreur serveur lors de la récupération des dettes du client"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Impossible de récupérer les dettes du client."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+  /archive/dettes/{debtId}:
+    get:
+      tags:
+        - Dettes
+      security:
+        - bearerAuth: []
+      summary: "Obtenir une dette archivée par son ID"
+      description: "Récupère une dette archivée spécifique basée sur son ID."
+      operationId: "getArchivedDebtById"
+      parameters:
+        - name: debtId
+          in: path
+          required: true
+          description: "ID de la dette archivée à récupérer"
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: "Dette archivée récupérée avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      client_id:
+                        type: integer
+                        example: 1
+                      montant_total:
+                        type: number
+                        format: float
+                        example: 200.5
+                      montant_verse:
+                        type: number
+                        format: float
+                        example: 50.0
+                      archived_at:
+                        type: string
+                        format: date-time
+                        example: "2024-09-16T00:00:00Z"
+                  message:
+                    type: string
+                    example: "Dette récupérée avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        500:
+          description: "Erreur serveur lors de la récupération de la dette"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Impossible de récupérer cette dette."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+  /restaure/{date}:
+    get:
+      tags:
+        - Dettes
+      security:
+        - bearerAuth: []
+      summary: "Restaurer les dettes archivées d'une date spécifique"
+      description: "Restaure les dettes archivées basées sur une date spécifique."
+      operationId: "restoreArchivedDebtsByDate"
+      parameters:
+        - name: date
+          in: path
+          required: true
+          description: "Date pour laquelle restaurer les dettes archivées (format : YYYY-MM-DD)"
+          schema:
+            type: string
+            example: "2024-09-16"
+      responses:
+        200:
+          description: "Dettes archivées restaurées avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    description: "Liste des dettes restaurées"
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        client_id:
+                          type: integer
+                          example: 1
+                        montant_total:
+                          type: number
+                          format: float
+                          example: 200.5
+                        montant_verse:
+                          type: number
+                          format: float
+                          example: 50.0
+                        restored_at:
+                          type: string
+                          format: date-time
+                          example: "2024-09-16T00:00:00Z"
+                  message:
+                    type: string
+                    example: "Dettes archivées restaurées avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Aucune dette archivée trouvée pour cette date"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Aucune dette archivée pour cette date."
+                  httpStatus:
+                    type: integer
+                    example: 404
+        500:
+          description: "Erreur serveur lors de la restauration des dettes archivées"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la restauration des dettes archivées."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+  /restaure/dette/{debtId}:
+    get:
+      tags:
+        - Dettes
+      security:
+        - bearerAuth: []
+      summary: "Restaurer une dette archivée spécifique"
+      description: "Restaure une dette archivée spécifique basée sur son ID."
+      operationId: "restoreArchivedDebt"
+      parameters:
+        - name: debtId
+          in: path
+          required: true
+          description: "ID de la dette à restaurer"
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: "Dette restaurée avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      client_id:
+                        type: integer
+                        example: 1
+                      montant_total:
+                        type: number
+                        format: float
+                        example: 200.5
+                      montant_verse:
+                        type: number
+                        format: float
+                        example: 50.0
+                      restored_at:
+                        type: string
+                        format: date-time
+                        example: "2024-09-16T00:00:00Z"
+                  message:
+                    type: string
+                    example: "Dette restaurée avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Cette dette n'existe pas ou est déjà restaurée."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Cette dette n'existe pas ou est déjà restaurée."
+                  httpStatus:
+                    type: integer
+                    example: 404
+        500:
+          description: "Erreur serveur lors de la restauration de la dette"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la restauration de la dette."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+  /restaure/client/{clientId}:
+    get:
+      tags:
+        - Dettes
+      security:
+        - bearerAuth: []
+      summary: "Restaurer les dettes archivées d'un client spécifique"
+      description: "Restaure toutes les dettes archivées pour un client spécifique basé sur son ID."
+      operationId: "restoreArchivedDebtsByClient"
+      parameters:
+        - name: clientId
+          in: path
+          required: true
+          description: "ID du client pour lequel restaurer les dettes archivées"
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: "Dettes du client restaurées avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    description: "Liste des dettes restaurées"
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        client_id:
+                          type: integer
+                          example: 1
+                        montant_total:
+                          type: number
+                          format: float
+                          example: 200.5
+                        montant_verse:
+                          type: number
+                          format: float
+                          example: 50.0
+                        restored_at:
+                          type: string
+                          format: date-time
+                          example: "2024-09-16T00:00:00Z"
+                  message:
+                    type: string
+                    example: "Dettes du client restaurées avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Les dettes du client n'existent pas ou sont déjà restaurées."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Les dettes du client n'existent pas ou sont déjà restaurées."
+                  httpStatus:
+                    type: integer
+                    example: 404
+        500:
+          description: "Erreur serveur lors de la restauration des dettes du client"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la restauration des dettes du client."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+  /notification/client/{id}:
+    get:
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      summary: "Envoyer une notification à un client spécifique"
+      description: "Envoie une notification de rappel à un client spécifique basé sur son ID."
+      operationId: "sendToOneClient"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: "ID du client à notifier"
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: "Notification envoyée au client avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Notification envoyée au client."
+                  notification:
+                    type: object
+                    properties:
+                      client_surnom:
+                        type: string
+                        example: "Durand"
+                      client_telephone:
+                        type: string
+                        example: "+123456789"
+        404:
+          description: "Client non trouvé"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Client non trouvé"
+        500:
+          description: "Erreur serveur lors de l'envoi de la notification"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Erreur lors de l'envoi de la notification."
+
+  /notification/client/all:
+    post:
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      summary: "Envoyer des notifications à des clients spécifiques"
+      description: "Envoie des notifications de rappel à une liste de clients spécifiés."
+      operationId: "sendToSpecificClients"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 3]
+      responses:
+        200:
+          description: "Notifications envoyées aux clients avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Notifications envoyées aux clients avec des dettes."
+                  clients_avec_dettes:
+                    type: array
+                    items:
+                      type: object
+                  clients_sans_dettes:
+                    type: array
+                    items:
+                      type: object
+                  clients_invalides:
+                    type: array
+                    items:
+                      type: object
+        400:
+          description: "Liste des IDs de clients invalide"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Veuillez fournir une liste valide d'ID de clients."
+        500:
+          description: "Erreur serveur lors de l'envoi des notifications"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Erreur lors de l'envoi des notifications."
+
+  /notification/client/message:
+    post:
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      summary: "Envoyer un message personnalisé à des clients spécifiques"
+      description: "Envoie un message personnalisé à une liste de clients spécifiés."
+      operationId: "sendCustomMessageToClients"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                client_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 2, 3]
+                message:
+                  type: string
+                  example: "Votre solde est dû."
+      responses:
+        200:
+          description: "Messages personnalisés envoyés aux clients avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Notifications envoyées aux clients avec le message personnalisé."
+                  clients_avec_dettes:
+                    type: array
+                    items:
+                      type: object
+                  clients_sans_dettes:
+                    type: array
+                    items:
+                      type: object
+                  clients_invalides:
+                    type: array
+                    items:
+                      type: object
+        400:
+          description: "Données de la requête invalides"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Veuillez fournir une liste valide d'ID de clients et un message."
+        500:
+          description: "Erreur serveur lors de l'envoi des messages"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "error"
+                  message:
+                    type: string
+                    example: "Erreur lors de l'envoi des messages personnalisés."
+
+  /demandes/notifications:
+    get:
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      summary: "Obtenir les notifications de demandes soumises pour le boutiquier"
+      description: "Récupère les notifications non lues pour le boutiquier et les marque comme lues."
+      operationId: "getBoutiquierNotifications"
+      responses:
+        200:
+          description: "Notifications de demandes soumises récupérées avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  message:
+                    type: string
+                    example: "Notifications de demandes soumises récupérées avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Aucune notification de demande soumise"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Aucune notification de demandes soumises."
+                  httpStatus:
+                    type: integer
+                    example: 404
+        500:
+          description: "Erreur serveur lors de la récupération des notifications de demandes"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la récupération des notifications de demandes soumises."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+  /notifications/unread:
+    get:
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      summary: "Obtenir les notifications non lues du client"
+      description: "Récupère les notifications non lues pour le client connecté et les marque comme lues."
+      operationId: "getUnreadNotifications"
+      responses:
+        200:
+          description: "Notifications non lues récupérées avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  message:
+                    type: string
+                    example: "Notifications non lues du client récupérées avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Aucune notification non lue"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Aucune notification non lue pour le client."
+                  httpStatus:
+                    type: integer
+                    example: 404
+        401:
+          description: "Client non authentifié"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Error"
+                  message:
+                    type: string
+                    example: "Client non authentifié"
+                  httpStatus:
+                    type: integer
+                    example: 401
+        500:
+          description: "Erreur serveur lors de la récupération des notifications non lues"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la récupération des notifications non lues."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+  /notifications/read:
+    get:
+      tags:
+        - Notifications
+      security:
+        - bearerAuth: []
+      summary: "Obtenir les notifications lues du client"
+      description: "Récupère les notifications lues pour le client connecté."
+      operationId: "getReadNotifications"
+      responses:
+        200:
+          description: "Notifications lues récupérées avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  message:
+                    type: string
+                    example: "Notifications lues du client récupérées avec succès."
+                  httpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Aucune notification lue"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Aucune notification lue pour le client."
+                  httpStatus:
+                    type: integer
+                    example: 404
+        401:
+          description: "Client non authentifié"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Error"
+                  message:
+                    type: string
+                    example: "Client non authentifié"
+                  httpStatus:
+                    type: integer
+                    example: 401
+        500:
+          description: "Erreur serveur lors de la récupération des notifications lues"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la récupération des notifications lues."
+                  httpStatus:
+                    type: integer
+                    example: 500
+
+  /demandes/all:
+    get:
+      tags:
+        - Demande
+      security:
+        - bearerAuth: []
+      summary: "Obtenir toutes les demandes du client"
+      description: "Récupère toutes les demandes de dette pour le client connecté avec une option de filtrage par état."
+      operationId: "getAllClientDemandes"
+      parameters:
+        - name: etat
+          in: query
+          description: "Filtrer les demandes par état (En cours, Annulée)"
+          required: false
+          schema:
+            type: string
+            enum: [En cours, Annulée]
+      responses:
+        200:
+          description: "Demandes récupérées avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  message:
+                    type: string
+                    example: "Demandes récupérées avec succès."
+                  HttpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Aucune demande trouvée pour le client."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Aucune demande trouvée pour le client."
+                  HttpStatus:
+                    type: integer
+                    example: 404
+        401:
+          description: "Client non authentifié."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Error"
+                  message:
+                    type: string
+                    example: "Client non authentifié."
+                  HttpStatus:
+                    type: integer
+                    example: 401
+        500:
+          description: "Erreur serveur lors de la récupération des demandes."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la récupération des demandes."
+                  HttpStatus:
+                    type: integer
+                    example: 500
+
+  /demandes/{demandeId}/disponible:
+    get:
+      tags:
+        - Demande
+      security:
+        - bearerAuth: []
+      summary: "Vérifier la disponibilité des articles pour une demande"
+      description: "Vérifie les articles disponibles et non disponibles pour une demande spécifique."
+      operationId: "checkDisponibilite"
+      parameters:
+        - name: demandeId
+          in: path
+          description: "ID de la demande"
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: "Disponibilité des articles récupérée avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Success"
+                  articles_disponibles:
+                    type: array
+                    items:
+                      type: object
+                  articles_non_disponibles:
+                    type: array
+                    items:
+                      type: object
+        404:
+          description: "Demande non trouvée."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Demande non trouvée."
+        500:
+          description: "Erreur serveur lors de la vérification de la disponibilité."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la vérification de la disponibilité."
+
+  /demandes/{demandeId}:
+    patch:
+      tags:
+        - Demande
+      security:
+        - bearerAuth: []
+      summary: "Mettre à jour une demande"
+      description: "Met à jour le statut d'une demande existante. Le statut ne peut être modifié que si la demande est en cours."
+      operationId: "update"
+      parameters:
+        - name: demandeId
+          in: path
+          description: "ID de la demande"
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: "Nouveau statut de la demande"
+                  example: "En cours"
+                motif:
+                  type: string
+                  description: "Motif de l'annulation, requis si le statut est 'Annulée'"
+                  example: "Motif de l'annulation"
+      responses:
+        200:
+          description: "Demande mise à jour avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Success"
+                  message:
+                    type: string
+                    example: "Demande mise à jour avec succès."
+        404:
+          description: "Demande non trouvée."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Demande non trouvée."
+        400:
+          description: "État de demande invalide."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "État de demande invalide."
+        500:
+          description: "Erreur serveur lors de la mise à jour de la demande."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la mise à jour de la demande."
+
+  /demandes:
+    post:
+      tags:
+        - Demande
+      security:
+        - bearerAuth: []
+      summary: "Créer une nouvelle demande"
+      description: "Soumet une nouvelle demande de dette pour le client connecté."
+      operationId: "store"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                articles:
+                  type: array
+                  description: "Liste des articles pour la demande."
+                  items:
+                    type: object
+                    properties:
+                      libelle:
+                        type: string
+                        description: "Libellé de l'article"
+                        example: "Boisson Fanta"
+                      qte:
+                        type: integer
+                        description: "Quantité de l'article"
+                        example: 2
+      responses:
+        200:
+          description: "Demande soumise avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Success"
+                  demande:
+                    type: object
+                  message:
+                    type: string
+                    example: "Demande de dette soumise avec succès."
+                  HttpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Client non trouvé pour l'utilisateur."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Client non trouvé pour l’utilisateur."
+                  HttpStatus:
+                    type: integer
+                    example: 404
+        400:
+          description: "Données de demande invalides."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Données de demande invalides."
+                  HttpStatus:
+                    type: integer
+                    example: 400
+        500:
+          description: "Erreur serveur lors de la soumission de la demande."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la soumission de la demande."
+                  HttpStatus:
+                    type: integer
+                    example: 500
+
+    get:
+      tags:
+        - Demande
+      security:
+        - bearerAuth: []
+      summary: "Obtenir les demandes du client"
+      description: "Récupère toutes les demandes de dette pour le client connecté, avec une option de filtrage par état. Retourne un message d'erreur si le client n'est pas trouvé ou si l'état est invalide."
+      operationId: "getClientDemandes"
+      parameters:
+        - name: etat
+          in: query
+          description: "Filtrer les demandes par état (En cours, Annulée). Si non fourni, toutes les demandes sont récupérées."
+          required: false
+          schema:
+            type: string
+            enum: [En cours, Annulée]
+      responses:
+        200:
+          description: "Demandes récupérées avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Success"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                  message:
+                    type: string
+                    example: "Demandes récupérées avec succès."
+                  HttpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Aucune demande trouvée pour le client ou client non trouvé."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Client non trouvé pour l’utilisateur."  # Ou "Aucune demande de dette n’a été trouvée pour le client."
+                  HttpStatus:
+                    type: integer
+                    example: 404
+        400:
+          description: "État de demande invalide."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "État invalide."
+                  HttpStatus:
+                    type: integer
+                    example: 400
+        401:
+          description: "Utilisateur non authentifié."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Utilisateur non authentifié."
+                  HttpStatus:
+                    type: integer
+                    example: 401
+        500:
+          description: "Erreur serveur lors de la récupération des demandes."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statut:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur serveur lors de la récupération des demandes."
+                  HttpStatus:
+                    type: integer
+                    example: 500
+
+  /demandes/{demandeId}/relance:
+    post:
+      tags:
+        - Demande
+      security:
+        - bearerAuth: []
+      summary: "Relancer une demande"
+      description: "Envoie une relance pour une demande de dette spécifique."
+      operationId: "relancerDemande"
+      parameters:
+        - name: demandeId
+          in: path
+          description: "ID de la demande"
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: "Demande relancée avec succès."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Success"
+                  message:
+                    type: string
+                    example: "Demande relancée avec succès."
+                  HttpStatus:
+                    type: integer
+                    example: 200
+        404:
+          description: "Demande non trouvée."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Demande non trouvée."
+                  HttpStatus:
+                    type: integer
+                    example: 404
+        500:
+          description: "Erreur serveur lors de la relance de la demande."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "Echec"
+                  message:
+                    type: string
+                    example: "Erreur lors de la relance de la demande."
+                  HttpStatus:
                     type: integer
                     example: 500
 

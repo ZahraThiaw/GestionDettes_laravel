@@ -13,7 +13,8 @@ class Article extends Model
     protected $fillable = [
         'libelle', 
         'prix', 
-        'qteStock'
+        'qteStock',
+        'quantite_seuil'
     ];
 
     protected $hidden = [
