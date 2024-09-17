@@ -4,6 +4,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DebtController;
+use App\Http\Controllers\DemandeController;
 use App\Http\Controllers\DetteController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -126,6 +127,9 @@ Route::prefix('v1')->group(function () {
         Route::middleware('can:isClient')->group(function (){
             Route::get('notifications/unread', [NotificationController::class, 'getUnreadNotifications']);
             Route::get('notifications/read', [NotificationController::class, 'getReadNotifications']);
+            Route::post('demandes', [DemandeController::class, 'store']);
+            Route::get('demandes', [DemandeController::class, 'index']);
+            Route::post('demandes/{demandeId}/relance', [DemandeController::class, 'relancerDemande']);
         });
 
     });

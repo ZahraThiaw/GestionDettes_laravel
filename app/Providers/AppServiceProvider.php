@@ -29,6 +29,10 @@ use App\Services\FirebaseArchivingService;
 use App\Services\LoyaltyCardService;
 use App\Services\QrCodeService;
 use App\Notifications\Channels\SmsChannel;
+use App\Repositories\Contracts\DebtRepositoryInterface;
+use App\Repositories\DebtRepository;
+use App\Services\Contracts\DebtServiceInterface;
+use App\Services\DebtService;
 use App\Services\SmsService;
 use App\Services\TwilioSmsService;
 use Illuminate\Support\Facades\Notification;
@@ -73,6 +77,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Lier l'interface DetteService à son implémentation
         $this->app->bind(DetteServiceInterface::class, DetteService::class);
+
+        $this->app->bind(DebtRepositoryInterface::class, DebtRepository::class);
+
+        $this->app->bind(DebtServiceInterface::class, DebtService::class);
 
         // // Liaison de l'interface SmsServiceInterface à une implémentation
         // $this->app->singleton(SmsServiceInterface::class, function ($app) {

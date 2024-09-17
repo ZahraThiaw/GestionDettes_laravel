@@ -21,6 +21,8 @@ class Client extends Model
         'adresse',
         'user_id',
         'qrcode',
+        'categorie_id',
+        "max_montant",
     ];
 
     protected $hidden = [
